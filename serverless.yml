@@ -1,0 +1,11 @@
+service: lag-api
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: ${opt:region}
+  stage: ${opt:stage}
+
+functions:
+  handler:
+    handler: handler.handle
