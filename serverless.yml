@@ -8,7 +8,7 @@ provider:
 
 functions:
   userHandler:
-    handler: user/handler.handle
+    handler: user/get-user.handle
     events:
       - http:
           method: get
