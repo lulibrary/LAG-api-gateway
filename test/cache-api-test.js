@@ -14,6 +14,8 @@ const uuid = require('uuid/v4')
 const rewire = require('rewire')
 let wires = []
 
+const HTTPError = require('node-http-error')
+
 // Module under test
 const CacheApi = rewire('../src/cache-api')
 
@@ -241,7 +243,7 @@ describe('cache api class tests', () => {
         schema: 'TestSchema',
         tableName: 'testTable',
         queueUrl: 'testQueueUrl',
-        almaApiCall: () => null
+        almaApiCall: () => Promise.resolve()
       })
 
       const testID = `test_id_${uuid()}`
@@ -385,6 +387,119 @@ describe('cache api class tests', () => {
       const testID = `test_id_${uuid()}`
 
       return testCache.get(testID).should.eventually.deep.equal(testItem)
+    })
+
+    it('should call getFromApi if CacheModel#get rejects', () => {
+      const SchemaStub = sandbox.stub()
+      const getStub = sandbox.stub()
+      getStub.rejects()
+      SchemaStub.returns({
+        get: getStub
+      })
+      const QueueStub = sandbox.stub()
+      const sendMessageStub = sandbox.stub()
+      QueueStub.returns({
+        sendMessage: () => sendMessageStub
+      })
+      const AlmaClientStub = sandbox.stub()
+      AlmaClientStub.returns({})
+
+      wires.push(
+        CacheApi.__set__('Schemas', {
+          TestSchema: SchemaStub
+        }),
+        CacheApi.__set__('Queue', QueueStub),
+        CacheApi.__set__('AlmaClient', AlmaClientStub)
+      )
+
+      const testCache = new CacheApi({
+        schema: 'TestSchema',
+        tableName: 'testTable',
+        queueUrl: 'testQueueUrl',
+        almaApiCall: () => null
+      })
+
+      const getFromApiStub = sandbox.stub(testCache, 'getFromApi')
+      getFromApiStub.resolves({})
+
+      const testID = `test_id_${uuid()}`
+
+      return testCache.get(testID)
+        .then(() => {
+          getFromApiStub.should.have.been.calledWith(testID)
+          sendMessageStub.should.not.have.been.called
+        })
+    })
+  })
+
+  describe('getFromApi tests', () => {
+    it('should reject with a 400 HTTP error if the API call rejects with a response', () => {
+      const SchemaStub = sandbox.stub()
+      SchemaStub.returns()
+      const QueueStub = sandbox.stub()
+      QueueStub.returns()
+      const AlmaClientStub = sandbox.stub()
+      AlmaClientStub.returns({})
+      const almaApiCallStub = sandbox.stub()
+      almaApiCallStub.rejects({ response: 'oh no' })
+
+      wires.push(
+        CacheApi.__set__('Schemas', {
+          TestSchema: SchemaStub
+        }),
+        CacheApi.__set__('Queue', QueueStub),
+        CacheApi.__set__('AlmaClient', AlmaClientStub)
+      )
+
+      const testID = `test_id_${uuid()}`
+
+      const testCache = new CacheApi({
+        schema: 'TestSchema',
+        tableName: 'testTable',
+        queueUrl: 'testQueueUrl',
+        almaApiCall: almaApiCallStub
+      })
+
+      return testCache.getFromApi(testID)
+        .catch(e => {
+          e.should.be.an.instanceOf(HTTPError)
+          e.message.should.equal(`No matching item with ID ${testID} found`)
+          e.status.should.equal(400)
+        })
+    })
+    it('should reject with a 500 HTTP error if the API call rejects with no response', () => {
+      const SchemaStub = sandbox.stub()
+      SchemaStub.returns()
+      const QueueStub = sandbox.stub()
+      QueueStub.returns()
+      const AlmaClientStub = sandbox.stub()
+      AlmaClientStub.returns({})
+      const almaApiCallStub = sandbox.stub()
+      almaApiCallStub.rejects()
+
+      wires.push(
+        CacheApi.__set__('Schemas', {
+          TestSchema: SchemaStub
+        }),
+        CacheApi.__set__('Queue', QueueStub),
+        CacheApi.__set__('AlmaClient', AlmaClientStub)
+      )
+
+      const testID = `test_id_${uuid()}`
+
+      const testCache = new CacheApi({
+        schema: 'TestSchema',
+        tableName: 'testTable',
+        queueUrl: 'testQueueUrl',
+        almaApiCall: almaApiCallStub
+      })
+
+      return testCache.getFromApi(testID)
+        .catch(e => {
+          e.should.be.an.instanceOf(HTTPError)
+          e.message.should.equal(`Unable to reach Alma`)
+          e.status.should.equal(500)
+        })
     })
   })
 })

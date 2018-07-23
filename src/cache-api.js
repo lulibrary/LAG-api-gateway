@@ -2,6 +2,8 @@ const Schemas = require('@lulibrary/lag-alma-utils')
 const { Queue } = require('@lulibrary/lag-utils')
 const AlmaClient = require('alma-api-wrapper')
 
+const HTTPError = require('node-http-error')
+
 class CacheApi {
   constructor (options) {
     this.CacheModel = Schemas[options.schema](options.tableName)
@@ -13,7 +15,19 @@ class CacheApi {
   get (...ids) {
     const id = ids[ids.length - 1]
     return this.CacheModel.get(id)
-      .then(item => item || (this.queue.sendMessage(id), this.almaApiCall(this.almaApi, ...ids)))
+      .catch(e => this.getFromApi(...ids))
+      .then(item => item || (this.queue.sendMessage(id), this.getFromApi(...ids)))
+  }
+
+  getFromApi (...ids) {
+    return this.almaApiCall(this.almaApi, ...ids)
+      .catch(e => {
+        if (e.response) {
+          throw new HTTPError(400, `No matching item with ID ${ids[ids.length - 1]} found`)
+        } else {
+          throw new HTTPError(500, 'Unable to reach Alma')
+        }
+      })
   }
 }
 
