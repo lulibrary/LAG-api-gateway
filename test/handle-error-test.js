@@ -15,7 +15,7 @@ const HTTPError = require('node-http-error')
 // Module under test
 const handleError = require('../src/handle-error')
 
-describe('user path handler', () => {
+describe('handle error tests', () => {
   afterEach(() => {
     sandbox.restore()
   })
