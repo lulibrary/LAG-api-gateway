@@ -1,6 +1,6 @@
 const HTTPError = require('node-http-error')
 
-const apiError = e => {
+const apiError = (e = {}) => {
   console.log(e)
   if (e.response) {
     throw new HTTPError(400, `No item with matching ID found`)
