@@ -5,6 +5,28 @@ provider:
   runtime: nodejs6.10
   region: ${opt:region}
   stage: ${opt:stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+      Resource:
+        - ${self:custom.TableArns.${opt:stage}.usersTable}
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+        - sqs:GetQueueURL
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+      Resource:
+        - ${self:custom.QueueArns.${opt:stage}.usersQueue}
+    - Effect: Allow
+      Action:
+        -ssm:GetParameter
+      Resource:
+        - ${env:ALMA_API_KEY_ARN}
 
 functions:
   userHandler:
@@ -18,19 +40,31 @@ functions:
               paths:
                 id: true
     environment:
-      ALMA_KEY: ${env:ALMA_API_KEY}
-      USER_CACHE_TABLE_NAME: ${self:custom.tableNames.${opt:stage}.userTable}
-      USERS_QUEUE_URL: ${self:custom.queueUrls.${opt:stage}.userQueue}
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
+      USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
 
 custom:
-  tableNames:
+  TableNames:
     stg:
-      userTable: ${env:USER_TABLE_NAME_STG}
+      usersTable: ${env:USER_TABLE_NAME_STG}
     prod:
-      userTable: ${env:USER_TABLE_NAME_PROD}
+      usersTable: ${env:USER_TABLE_NAME_PROD}
+
+  TableArns:
+    stg:
+      usersTable: ${env:USER_TABLE_ARN_STG}
+    prod:
+      usersTable: ${env:USER_TABLE_ARN_PROD}
   
-  queueUrls:
+  QueueUrls:
     stg:
-      userQueue: ${env:USER_QUEUE_URL_STG}
+      usersQueue: ${env:USER_QUEUE_URL_STG}
     prod:
-      userQueue: ${env:USER_QUEUE_URL_PROD}
+      usersQueue: ${env:USER_QUEUE_URL_PROD}
+
+  QueueArns:
+    stg:
+      usersQueue: ${env:USER_QUEUE_ARN_STG}
+    prod:
+      usersQueue: ${env:USER_QUEUE_ARN_PROD}
