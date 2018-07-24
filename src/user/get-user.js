@@ -6,6 +6,7 @@ const AlmaClient = require('alma-api-wrapper')
 const _pick = require('lodash.pick')
 const handleError = require('../handle-error')
 const apiError = require('../api-error')
+const getAlmaApiKey = require('../get-alma-api-key')
 
 const UserModel = Schemas.UserSchema(process.env.USER_CACHE_TABLE_NAME)
 
@@ -53,8 +54,9 @@ const formatCacheUser = user => {
 }
 
 const getUserFromApi = userID => {
-  return new AlmaClient().users.get(userID)
+  return getAlmaApiKey()
+    .then(() => new AlmaClient().users.get(userID))
+    .catch(apiError)
     .then(user => user.data)
     .then(userData => _pick(userData, userApiFields))
-    .catch(apiError)
 }

@@ -16,7 +16,7 @@ const uuid = require('uuid/v4')
 const AWS_MOCK = require('aws-sdk-mock')
 let mocks = []
 
-process.env.ALMA_KEY = 'key'
+process.env.ALMA_API_KEY_NAME = 'key'
 const testTableName = `test_user_table_${uuid()}`
 process.env.USER_CACHE_TABLE_NAME = testTableName
 const testQueueUrl = `test_users_queue_${uuid()}`
@@ -93,6 +93,10 @@ describe('user path end to end tests', function () {
       }
     }
     getItemStub.callsArgWith(1, null, testUserRecord)
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
 
     return handle({
@@ -117,6 +121,10 @@ describe('user path end to end tests', function () {
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
 
     const testUserID = `test_user_${uuid()}`
 
@@ -148,6 +156,10 @@ describe('user path end to end tests', function () {
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
 
     const testUserID = `test_user_${uuid()}`
 
