@@ -14,6 +14,7 @@ provider:
         - dynamodb:DescribeTable
       Resource:
         - ${self:custom.TableArns.${opt:stage}.usersTable}
+        - ${self:custom.TableArns.${opt:stage}.loansTable}
     - Effect: Allow
       Action:
         - sqs:SendMessage
@@ -22,6 +23,7 @@ provider:
         - sqs:DeleteMessage
       Resource:
         - ${self:custom.QueueArns.${opt:stage}.usersQueue}
+        - ${self:custom.QueueArns.${opt:stage}.loansQueue}
     - Effect: Allow
       Action:
         -ssm:GetParameter
@@ -43,28 +45,51 @@ functions:
       ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
       USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
       USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+  userLoanHandler:
+    handler: user/get-user-loan.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/loans/{loanID}
+          request:
+            parameters:
+              paths:
+                userID: true
+                loanID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      LOAN_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.loansTable}
+      LOANS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.loansQueue}
 
 custom:
   TableNames:
     stg:
       usersTable: ${env:USER_TABLE_NAME_STG}
+      usersTable: ${env:LOAN_TABLE_NAME_STG}
     prod:
-      usersTable: ${env:USER_TABLE_NAME_PROD}
+      usersTable: ${env:LOAN_TABLE_NAME_PROD}
+      usersTable: ${env:LOAN_TABLE_NAME_PROD}
 
   TableArns:
     stg:
-      usersTable: ${env:USER_TABLE_ARN_STG}
+      usersTable: ${env:LOAN_TABLE_ARN_STG}
+      usersTable: ${env:LOAN_TABLE_ARN_STG}
     prod:
-      usersTable: ${env:USER_TABLE_ARN_PROD}
+      usersTable: ${env:LOAN_TABLE_ARN_PROD}
+      usersTable: ${env:LOAN_TABLE_ARN_PROD}
   
   QueueUrls:
     stg:
-      usersQueue: ${env:USER_QUEUE_URL_STG}
+      usersQueue: ${env:LOAN_QUEUE_URL_STG}
+      usersQueue: ${env:LOAN_QUEUE_URL_STG}
     prod:
-      usersQueue: ${env:USER_QUEUE_URL_PROD}
+      usersQueue: ${env:LOAN_QUEUE_URL_PROD}
+      usersQueue: ${env:LOAN_QUEUE_URL_PROD}
 
   QueueArns:
     stg:
-      usersQueue: ${env:USER_QUEUE_ARN_STG}
+      usersQueue: ${env:LOAN_QUEUE_ARN_STG}
+      usersQueue: ${env:LOAN_QUEUE_ARN_STG}
     prod:
-      usersQueue: ${env:USER_QUEUE_ARN_PROD}
+      usersQueue: ${env:LOAN_QUEUE_ARN_PROD}
+      usersQueue: ${env:LOAN_QUEUE_ARN_PROD}
