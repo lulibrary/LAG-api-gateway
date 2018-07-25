@@ -28,7 +28,6 @@ class ApiLoan extends ApiObject {
       schema: Schemas.LoanSchema,
       tableName: process.env.LOAN_CACHE_TABLE_NAME
     })
-    // this.Model = Schemas.LoanSchema(process.env.LOAN_CACHE_TABLE_NAME)
   }
 
   get (userID, loanID) {
