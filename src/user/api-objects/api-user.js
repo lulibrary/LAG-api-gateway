@@ -39,11 +39,11 @@ class ApiUser extends ApiObject {
 
   getLoansFromApi (userID) {
     return this._ensureApi()
-      .then(() => this.almaApi.users.for(userID).getLoans())
+      .then(() => this.almaApi.users.for(userID).loans())
       .catch(apiError)
       .then(userLoans => {
         return {
-          loans: userLoans.item_loan.map(loan => loan.loan_id)
+          loans: Array.from(userLoans.keys())
         }
       })
   }

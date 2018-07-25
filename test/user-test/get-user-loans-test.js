@@ -18,15 +18,14 @@ let mocks = []
 
 process.env.ALMA_API_KEY_NAME = 'key'
 const testTableName = `test_user_table_${uuid()}`
-const testQueueUrl = `test_users_queue_${uuid()}`
+const testUsersQueueUrl = `test_users_queue_${uuid()}`
 
 let stubs = require('../mocks.js')
 const getItemStub = stubs.getItemStub
 const describeTableStub = stubs.describeTableStub
-stubs.test = 1
 
 // Module under test
-let userPathHandler = require('../../src/user/get-user')
+let userPathHandler = require('../../src/user/get-user-loans')
 const handle = (event, ctx) => new Promise((resolve, reject) => {
   userPathHandler.handle(event, ctx, (err, res) => {
     return err ? reject(err) : resolve(res)
@@ -56,13 +55,13 @@ const mockTable = (tableName) => {
   })
 }
 
-describe('user path end to end tests', function () {
+describe('user/<userID>/loans path end to end tests', function () {
   this.timeout(10000)
 
   before(() => {
     mockTable(testTableName)
     process.env.USER_CACHE_TABLE_NAME = testTableName
-    process.env.USERS_QUEUE_URL = testQueueUrl
+    process.env.USERS_QUEUE_URL = testUsersQueueUrl
   })
 
   afterEach(() => {
@@ -81,23 +80,18 @@ describe('user path end to end tests', function () {
         primary_id: {
           S: testUserID
         },
-        loan_ids: {
-          L: []
-        },
-        request_ids: {
-          L: []
-        },
         expiry_date: {
           N: '1600000000'
-        }
+        },
+        loan_ids: []
       }
     }
     getItemStub.callsArgWith(1, null, testUserRecord)
+    // AWS_MOCK.mock('DynamoDB', 'getItem', getItemStub)
     const getParameterStub = sandbox.stub()
     getParameterStub.callsArgWith(1, null, { Value: 'key' })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
     mocks.push('SSM')
-    // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
 
     return handle({
       pathParameters: {
@@ -136,7 +130,7 @@ describe('user path end to end tests', function () {
         return true
       })
       .reply(200, {
-        primary_id: testUserID
+        item_loan: []
       })
 
     return handle({
@@ -145,7 +139,7 @@ describe('user path end to end tests', function () {
       }
     }, {})
       .then(() => {
-        urlQueries.should.include(`/almaws/v1/users/${testUserID}?format=json`)
+        urlQueries.should.include(`/almaws/v1/users/${testUserID}/loans?format=json`)
       })
   })
 
@@ -162,11 +156,10 @@ describe('user path end to end tests', function () {
     mocks.push('SSM')
 
     const testUserID = `test_user_${uuid()}`
-
     nock('https://api-eu.hosted.exlibrisgroup.com')
       .get(uri => true)
       .reply(200, {
-        primary_id: testUserID
+        item_loan: []
       })
 
     return handle({
@@ -176,9 +169,46 @@ describe('user path end to end tests', function () {
     })
       .then(() => {
         sendMessageStub.should.have.been.calledWith({
-          QueueUrl: testQueueUrl,
+          QueueUrl: testUsersQueueUrl,
           MessageBody: testUserID
         })
+      })
+  })
+
+  it('should return an error if it cannot get the loan from the cache or the API', () => {
+    AWS_MOCK.mock('SQS', 'sendMessage', {})
+    getItemStub.callsArgWith(1, null, { })
+    // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
+    mocks.push('SQS')
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
+
+    // sandbox.stub(console, 'log')
+
+    const testUserID = `test_user_${uuid()}`
+    const testLoanID = `test_loan_${uuid()}`
+
+    let urlQueries = []
+
+    const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
+      .get((uri) => {
+        urlQueries.push(uri)
+        return true
+      })
+      .reply(400, {
+        message: 'Missing API key'
+      })
+
+    return handle({
+      pathParameters: {
+        userID: testUserID,
+        loanID: testLoanID
+      }
+    }, {})
+      .catch(e => {
+        e.statusCode.should.equal(400)
       })
   })
 })
