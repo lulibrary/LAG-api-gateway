@@ -47,7 +47,7 @@ describe('user path handler', () => {
         })
     })
 
-    it('should call CacheApi#get', () => {
+    it('should call ApiUser#get', () => {
       const testUserID = `test_user_${uuid()}`
       const getStub = sandbox.stub()
       getStub.resolves()
@@ -60,6 +60,27 @@ describe('user path handler', () => {
       return handle({ pathParameters: { userID: testUserID } })
         .then(() => {
           getStub.should.have.been.calledOnce
+        })
+    })
+
+    it('should call handleError if ApiUser#get rejects', () => {
+      const testUserID = `test_user_${uuid()}`
+
+      const testError = new Error('could not get user')
+
+      const apiUserStub = sandbox.stub()
+      apiUserStub.returns({
+        get: () => Promise.reject(testError)
+      })
+      const handleErrorStub = sandbox.stub()
+      handleErrorStub.returns()
+
+      wires.push(userPathHandler.__set__('ApiUser', apiUserStub))
+      wires.push(userPathHandler.__set__('handleError', handleErrorStub))
+
+      return handle({ pathParameters: { userID: testUserID } })
+        .then(() => {
+          handleErrorStub.should.have.been.calledWith(testError)
         })
     })
   })
