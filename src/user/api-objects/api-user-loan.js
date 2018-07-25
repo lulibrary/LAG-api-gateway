@@ -7,7 +7,6 @@ const apiError = require('../../api-error')
 
 const loanFields = [
   'loan_id',
-  'loan_id',
   'renewable',
   'call_number',
   'loan_status',
@@ -33,13 +32,14 @@ class ApiLoan extends ApiObject {
   get (userID, loanID) {
     return this.getFromCache(loanID)
       .catch(() => this.getFromApi(userID, loanID))
+      .then(loan => _pick(loan, loanFields))
   }
 
   getFromApi (userID, loanID) {
     return this._ensureApi()
       .then(() => this.almaApi.users.for(userID).getLoan(loanID))
       .catch(apiError)
-      .then(loan => _pick(loan.data, loanFields))
+      .then(loan => loan.data)
   }
 
   getFromCache (loanID) {

@@ -26,13 +26,13 @@ provider:
         - ${self:custom.QueueArns.${opt:stage}.loansQueue}
     - Effect: Allow
       Action:
-        -ssm:GetParameter
+        - ssm:GetParameter
       Resource:
         - ${env:ALMA_API_KEY_ARN}
 
 functions:
   userHandler:
-    handler: user/get-user.handle
+    handler: src/user/get-user.handle
     events:
       - http:
           method: get
@@ -46,7 +46,7 @@ functions:
       USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
       USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
   userLoansHandler:
-    handler: user/get-user-loans.handle
+    handler: src/user/get-user-loans.handle
     events:
       - http:
           method: get
@@ -62,7 +62,7 @@ functions:
       LOAN_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.loansTable}
       LOANS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.loansQueue}
   userLoanHandler:
-    handler: user/get-user-loan.handle
+    handler: src/user/get-user-loan.handle
     events:
       - http:
           method: get

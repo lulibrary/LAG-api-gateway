@@ -1,8 +1,8 @@
 const HTTPError = require('node-http-error')
 
 const handleError = (error) => {
-  console.log(error)
   if (!(error instanceof HTTPError)) {
+    console.log(error)
     error = new HTTPError(500, 'Internal Server Error')
   }
 
