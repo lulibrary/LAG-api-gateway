@@ -1,5 +1,4 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
-const { Queue } = require('@lulibrary/lag-utils')
 
 const ApiObject = require('./api-object')
 
@@ -24,9 +23,10 @@ const loanFields = [
 
 class ApiLoan extends ApiObject {
   constructor () {
-    super()
+    super({
+      queueUrl: process.env.LOANS_QUEUE_URL
+    })
     this.Model = Schemas.LoanSchema(process.env.LOAN_CACHE_TABLE_NAME)
-    this.queue = new Queue({ url: process.env.LOANS_QUEUE_URL })
   }
 
   get (userID, loanID) {

@@ -28,7 +28,7 @@ describe('base api object tests', () => {
 
   describe('_ensureApi method tests', () => {
     it('should resolve with the alma Api if it already exists', () => {
-      const testObject = new ApiObject()
+      const testObject = new ApiObject({ queueUrl: uuid() })
       const testApi = {
         api: uuid()
       }
@@ -44,7 +44,7 @@ describe('base api object tests', () => {
       wires.push(ApiObject.__set__('getAlmaApiKey', getKeyStub))
 
       process.env.ALMA_KEY = 'key'
-      const testObject = new ApiObject()
+      const testObject = new ApiObject({ queueUrl: uuid() })
 
       return testObject._ensureApi()
         .then(() => {
@@ -58,7 +58,7 @@ describe('base api object tests', () => {
       wires.push(ApiObject.__set__('getAlmaApiKey', getKeyStub))
 
       process.env.ALMA_KEY = 'key'
-      const testObject = new ApiObject()
+      const testObject = new ApiObject({ queueUrl: uuid() })
 
       return testObject._ensureApi()
         .then(() => {

@@ -1,5 +1,4 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
-const { Queue } = require('@lulibrary/lag-utils')
 
 const ApiObject = require('./api-object')
 
@@ -14,9 +13,10 @@ const userApiFields = [
 
 class ApiUser extends ApiObject {
   constructor () {
-    super()
+    super({
+      queueUrl: process.env.USERS_QUEUE_URL
+    })
     this.Model = Schemas.UserSchema(process.env.USER_CACHE_TABLE_NAME)
-    this.queue = new Queue({ url: process.env.USERS_QUEUE_URL })
   }
 
   get (userID) {

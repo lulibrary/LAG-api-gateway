@@ -1,7 +1,12 @@
+const { Queue } = require('@lulibrary/lag-utils')
+
 const AlmaClient = require('alma-api-wrapper')
 const getAlmaApiKey = require('../../get-alma-api-key')
 
 class ApiObject {
+  constructor (config) {
+    this.queue = new Queue({ url: config.queueUrl })
+  }
   _ensureApi () {
     return this.almaApi
       ? Promise.resolve(this.almaApi)
