@@ -10,6 +10,8 @@ const getAlmaApiKey = require('../get-alma-api-key')
 
 const UserModel = Schemas.UserSchema(process.env.USER_CACHE_TABLE_NAME)
 
+const ApiUser = require('./api-objects/api-user')
+
 const userApiFields = [
   'primary_id',
   'loans',
@@ -19,7 +21,8 @@ const userApiFields = [
 module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
 
-  handleUser(userID)
+  // handleUser(userID)
+  new ApiUser(userID).get()
     .then(response => {
       callback(null, {
         statusCode: 200,
@@ -31,6 +34,7 @@ module.exports.handle = (event, context, callback) => {
     })
 }
 
+/*
 const handleUser = (userID) => {
   return UserModel.get(userID)
     .then(user => user
@@ -60,3 +64,4 @@ const getUserFromApi = userID => {
     .then(user => user.data)
     .then(userData => _pick(userData, userApiFields))
 }
+*/

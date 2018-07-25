@@ -16,7 +16,7 @@ const uuid = require('uuid/v4')
 const AWS_MOCK = require('aws-sdk-mock')
 let mocks = []
 
-process.env.ALMA_KEY = 'key'
+process.env.ALMA_API_KEY_NAME = 'key'
 const testTableName = `test_loan_table_${uuid()}`
 process.env.LOAN_CACHE_TABLE_NAME = testTableName
 const testQueueUrl = `test_loans_queue_${uuid()}`
@@ -88,6 +88,10 @@ describe('loan path end to end tests', function () {
     }
     getItemStub.callsArgWith(1, null, testUserRecord)
     // AWS_MOCK.mock('DynamoDB', 'getItem', getItemStub)
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
 
     return handle({
       pathParameters: {
@@ -112,6 +116,10 @@ describe('loan path end to end tests', function () {
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
 
     const testUserID = `test_user_${uuid()}`
     const testLoanID = `test_loan_${uuid()}`
@@ -145,6 +153,10 @@ describe('loan path end to end tests', function () {
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
 
     const testUserID = `test_user_${uuid()}`
     const testLoanID = `test_loan_${uuid()}`
@@ -174,8 +186,12 @@ describe('loan path end to end tests', function () {
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
 
-    sandbox.stub(console, 'log')
+    // sandbox.stub(console, 'log')
 
     const testUserID = `test_user_${uuid()}`
     const testLoanID = `test_loan_${uuid()}`

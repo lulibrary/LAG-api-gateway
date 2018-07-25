@@ -8,6 +8,8 @@ const _pick = require('lodash.pick')
 const handleError = require('../handle-error')
 const apiError = require('../api-error')
 
+const ApiUserLoan = require('./api-objects/api-user-loan')
+
 const LoanModel = Schemas.LoanSchema(process.env.LOAN_CACHE_TABLE_NAME)
 
 const loanApiFields = [
@@ -30,7 +32,8 @@ module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
   const loanID = event.pathParameters.loanID
 
-  handleUserLoan(userID, loanID)
+  // handleUserLoan(userID, loanID)
+  new ApiUserLoan(userID, loanID).get()
     .then(response => {
       callback(null, {
         statusCode: 200,
