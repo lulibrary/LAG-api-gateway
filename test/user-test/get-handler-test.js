@@ -14,6 +14,8 @@ const uuid = require('uuid/v4')
 const rewire = require('rewire')
 let wires = []
 
+const ApiUser = require('../../src/user/api-objects/api-user')
+
 // Module under test
 const userPathHandler = rewire('../../src/user/get-user')
 const handle = (event, ctx) => new Promise((resolve, reject) => {
@@ -29,142 +31,36 @@ describe('user path handler', () => {
     wires = []
   })
 
-  describe('handler tests', () => {
-    it('should call handleUser with the user ID', () => {
-      const handleUserStub = sandbox.stub()
-      handleUserStub.resolves()
-      wires.push(
-        userPathHandler.__set__('handleUser', handleUserStub)
-      )
-
-      const testUserID = `test_user_${uuid()}`
-
-      const testEvent = {
-        pathParameters: {
-          userID: testUserID
-        }
-      }
-
-      return handle(testEvent, {})
-        .then(() => {
-          handleUserStub.should.have.been.calledWith(testUserID)
-        })
-    })
-
-    it('should callback with the handleUser response if it resolves', () => {
-      const testUserID = `test_user_${uuid()}`
-
-      const testResponse = {
-        primary_id: testUserID,
-        loan_ids: [uuid(), uuid(), uuid()],
-        request_ids: [uuid(), uuid(), uuid()]
-      }
-
-      const expected = {
-        statusCode: 200,
-        body: JSON.stringify(testResponse)
-      }
-      const handleUserStub = sandbox.stub()
-      handleUserStub.resolves(testResponse)
-      wires.push(
-        userPathHandler.__set__('handleUser', handleUserStub)
-      )
-
-      const testEvent = {
-        pathParameters: {
-          userID: testUserID
-        }
-      }
-
-      return handle(testEvent, {}).should.eventually.deep.equal(expected)
-    })
-
-    it('should call handleError if handleUser rejects', () => {
-      const testUserID = `test_user_${uuid()}`
-
-      const handleUserStub = sandbox.stub()
-      handleUserStub.rejects(new Error('oh no'))
-      const handleErrorStub = sandbox.stub()
-      handleErrorStub.returns()
-      wires.push(
-        userPathHandler.__set__('handleUser', handleUserStub),
-        userPathHandler.__set__('handleError', handleErrorStub)
-      )
-
-      const testEvent = {
-        pathParameters: {
-          userID: testUserID
-        }
-      }
-
-      return handle(testEvent, {})
-        .catch(() => {
-          handleErrorStub.should.have.been.calledWith(new Error('oh no'))
-        })
-    })
-
-    it('should callback with the result of handleError for a rejection', () => {
-      const testUserID = `test_user_${uuid()}`
-
-      const errorResponse = {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: 'Internal Server Error'
-        })
-      }
-
-      const handleUserStub = sandbox.stub()
-      handleUserStub.rejects(new Error('oh no'))
-      const handleErrorStub = sandbox.stub()
-      handleErrorStub.returns(errorResponse)
-      wires.push(
-        userPathHandler.__set__('handleUser', handleUserStub),
-        userPathHandler.__set__('handleError', handleErrorStub)
-      )
-
-      const testEvent = {
-        pathParameters: {
-          userID: testUserID
-        }
-      }
-
-      return handle(testEvent, {}).should.eventually.be.rejectedWith(errorResponse)
-    })
-  })
-
-  /*
   describe('handleUser method tests', () => {
-    const handleUser = userPathHandler.__get__('handleUser')
-
-    it('should create an instance of CacheApi', () => {
+    it('should create an instance of ApiUser', () => {
       const testUserID = `test_user_${uuid()}`
-      const cacheApiStub = sandbox.stub()
-      cacheApiStub.returns({
+      const apiUserStub = sandbox.stub()
+      apiUserStub.returns({
         get: () => Promise.resolve()
       })
-      wires.push(userPathHandler.__set__('CacheApi', cacheApiStub))
+      wires.push(userPathHandler.__set__('ApiUser', apiUserStub))
 
-      return handleUser(testUserID)
+      return handle({ pathParameters: { userID: testUserID } })
         .then(() => {
-          cacheApiStub.should.have.been.calledWithNew
+          apiUserStub.should.have.been.calledWithNew
+          apiUserStub.should.have.been.calledWith(testUserID)
         })
     })
 
-    it('should call CacheApi#get with the user ID', () => {
+    it('should call CacheApi#get', () => {
       const testUserID = `test_user_${uuid()}`
       const getStub = sandbox.stub()
       getStub.resolves()
-      const cacheApiStub = sandbox.stub()
-      cacheApiStub.returns({
+      const apiUserStub = sandbox.stub()
+      apiUserStub.returns({
         get: getStub
       })
-      wires.push(userPathHandler.__set__('CacheApi', cacheApiStub))
+      wires.push(userPathHandler.__set__('ApiUser', apiUserStub))
 
-      return handleUser(testUserID)
+      return handle({ pathParameters: { userID: testUserID } })
         .then(() => {
-          getStub.should.have.been.calledWith(testUserID)
+          getStub.should.have.been.calledOnce
         })
     })
   })
-    */
 })
