@@ -19,6 +19,7 @@ let mocks = []
 process.env.ALMA_API_KEY_NAME = 'key'
 const testTableName = `test_user_table_${uuid()}`
 const testUsersQueueUrl = `test_users_queue_${uuid()}`
+const testLoanTableName = `test_loan_table_${uuid()}`
 
 let stubs = require('../mocks.js')
 const getItemStub = stubs.getItemStub
@@ -61,7 +62,9 @@ describe('user/<userID>/loans path end to end tests', function () {
   before(() => {
     mockTable(testTableName)
     process.env.USER_CACHE_TABLE_NAME = testTableName
+    process.env.LOAN_CACHE_TABLE_NAME = testLoanTableName
     process.env.USERS_QUEUE_URL = testUsersQueueUrl
+    process.env.LOANS_QUEUE_URL = uuid()
   })
 
   afterEach(() => {
@@ -177,9 +180,9 @@ describe('user/<userID>/loans path end to end tests', function () {
 
   it('should return an error if it cannot get the loan from the cache or the API', () => {
     AWS_MOCK.mock('SQS', 'sendMessage', {})
+    mocks.push('SQS')
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
-    mocks.push('SQS')
     const getParameterStub = sandbox.stub()
     getParameterStub.callsArgWith(1, null, { Value: 'key' })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
@@ -209,6 +212,118 @@ describe('user/<userID>/loans path end to end tests', function () {
     }, {})
       .catch(e => {
         e.statusCode.should.equal(400)
+      })
+  })
+
+  it('should query the Cache for each Loan record on the User', () => {
+    const testUserID = `test_user_${uuid()}`
+    const testLoanIDs = [uuid(), uuid(), uuid(), uuid()]
+
+    getItemStub.onCall(0).callsArgWith(1, null, {
+      Item: {
+        primary_id: {
+          S: testUserID
+        },
+        expiry_date: {
+          N: '1600000000'
+        },
+        loan_ids: testLoanIDs
+      }
+    })
+
+    testLoanIDs.forEach((id, index) => {
+      getItemStub.onCall(index + 1).callsArgWith(1, null, {
+        Item: {
+          loan_id: {
+            S: id
+          }
+        }
+      })
+    })
+
+    return handle({
+      pathParameters: {
+        userID: testUserID
+      }
+    }, {})
+      .then(() => {
+        testLoanIDs.forEach(loanID => {
+          getItemStub.should.have.been.calledWith({
+            TableName: testLoanTableName,
+            Key: {
+              loan_id: {
+                S: loanID
+              }
+            }
+          })
+        })
+      })
+  })
+
+  it('should call the Alma Api for any Loans which are not in the Cache', () => {
+    const testUserID = `test_user_${uuid()}`
+    const testLoanIDs = [uuid(), uuid(), uuid(), uuid()]
+
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
+    AWS_MOCK.mock('SQS', 'sendMessage', {})
+    mocks.push('SQS')
+
+    getItemStub.onCall(0).callsArgWith(1, null, {
+      Item: {
+        primary_id: {
+          S: testUserID
+        },
+        expiry_date: {
+          N: '1600000000'
+        },
+        loan_ids: testLoanIDs
+      }
+    })
+
+    const loanItem = (id) => {
+      return {
+        Item: {
+          loan_id: {
+            S: id
+          }
+        }
+      }
+    }
+
+    const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
+
+    testLoanIDs.forEach((loanID, index) => {
+      getItemStub.onCall(index + 1).callsArgWith(1, null, index % 2 === 0 ? loanItem(loanID) : {})
+
+      if (index % 2 === 1) {
+        alma.get(`/almaws/v1/users/${testUserID}/loans/${loanID}?format=json`)
+          .reply(200, {
+            loan_id: loanID
+          })
+      }
+    })
+
+    return handle({
+      pathParameters: {
+        userID: testUserID
+      }
+    }, {})
+      .then(res => {
+        testLoanIDs.forEach((loanID, index) => {
+          if (index % 2 === 0) {
+            getItemStub.should.have.been.calledWith({
+              TableName: testLoanTableName,
+              Key: {
+                loan_id: {
+                  S: loanID
+                }
+              }
+            })
+          }
+        })
       })
   })
 })

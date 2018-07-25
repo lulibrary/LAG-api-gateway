@@ -43,8 +43,7 @@ class ApiLoan extends ApiObject {
 
   getFromCache (loanID) {
     return this.Model.get(loanID)
-      .then(loan => loan || (this.queue.sendMessage(loanID), Promise.reject())
-      )
+      .then(loan => loan || (this.queue.sendMessage(loanID), Promise.reject()))
   }
 }
 

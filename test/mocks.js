@@ -5,8 +5,6 @@ const stubs = (() => {
   this.describeTableStub = sinon.stub()
   this.getItemStub = sinon.stub()
 
-  this.test = 0
-
   AWS_MOCK.mock('DynamoDB', 'describeTable', this.describeTableStub)
   AWS_MOCK.mock('DynamoDB', 'getItem', this.getItemStub)
 

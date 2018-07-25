@@ -32,6 +32,6 @@ const handleUserLoans = (userID) => {
   return new ApiUser()
     .getLoanIDs(userID)
     .then(loans => {
-      return Promise.all(loans.map(loan => loanResolver.get(loan)))
+      return Promise.all(loans.map(loanID => loanResolver.get(userID, loanID)))
     })
 }
