@@ -43,7 +43,6 @@ describe('user path handler', () => {
       return handle({ pathParameters: { userID: testUserID } })
         .then(() => {
           apiUserStub.should.have.been.calledWithNew
-          apiUserStub.should.have.been.calledWith(testUserID)
         })
     })
 
@@ -60,6 +59,7 @@ describe('user path handler', () => {
       return handle({ pathParameters: { userID: testUserID } })
         .then(() => {
           getStub.should.have.been.calledOnce
+          getStub.should.have.been.calledWith(testUserID)
         })
     })
 

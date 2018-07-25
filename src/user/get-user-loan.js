@@ -7,7 +7,7 @@ module.exports.handle = (event, context, callback) => {
   const loanID = event.pathParameters.loanID
 
   // handleUserLoan(userID, loanID)
-  new ApiUserLoan(userID, loanID).get()
+  new ApiUserLoan().get(userID, loanID)
     .then(response => {
       callback(null, {
         statusCode: 200,

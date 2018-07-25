@@ -13,30 +13,46 @@ const userApiFields = [
 ]
 
 class ApiUser extends ApiObject {
-  constructor (userID) {
+  constructor () {
     super()
-    this.userID = userID
     this.Model = Schemas.UserSchema(process.env.USER_CACHE_TABLE_NAME)
     this.queue = new Queue({ url: process.env.USERS_QUEUE_URL })
   }
 
-  get () {
-    return this.getFromCache()
-      .catch(() => this.getFromApi())
+  get (userID) {
+    return this.getFromCache(userID)
+      .catch(() => this.getFromApi(userID))
   }
 
-  getFromApi () {
+  getLoanIDs (userID) {
+    return this.getFromCache(userID)
+      .catch(() => this.getLoansFromApi(userID))
+      .then(user => user.loans)
+  }
+
+  getFromApi (userID) {
     return this._ensureApi()
-      .then(() => this.almaApi.users.get(this.userID))
+      .then(() => this.almaApi.users.get(userID))
       .catch(apiError)
       .then(user => _pick(user.data, userApiFields))
   }
 
-  getFromCache () {
-    return this.Model.get(this.userID)
+  getLoansFromApi (userID) {
+    return this._ensureApi()
+      .then(() => this.almaApi.users.for(userID).getLoans())
+      .catch(apiError)
+      .then(userLoans => {
+        return {
+          loans: userLoans.item_loan.map(loan => loan.loan_id)
+        }
+      })
+  }
+
+  getFromCache (userID) {
+    return this.Model.get(userID)
       .then(user => user
         ? formatCacheUser(user)
-        : (this.queue.sendMessage(this.userID), Promise.reject())
+        : (this.queue.sendMessage(userID), Promise.reject())
       )
   }
 }
