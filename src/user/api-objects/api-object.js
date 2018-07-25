@@ -6,6 +6,7 @@ const getAlmaApiKey = require('../../get-alma-api-key')
 class ApiObject {
   constructor (config) {
     this.queue = new Queue({ url: config.queueUrl })
+    this.Model = config.schema(config.tableName)
   }
   _ensureApi () {
     return this.almaApi

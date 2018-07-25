@@ -24,9 +24,11 @@ const loanFields = [
 class ApiLoan extends ApiObject {
   constructor () {
     super({
-      queueUrl: process.env.LOANS_QUEUE_URL
+      queueUrl: process.env.LOANS_QUEUE_URL,
+      schema: Schemas.LoanSchema,
+      tableName: process.env.LOAN_CACHE_TABLE_NAME
     })
-    this.Model = Schemas.LoanSchema(process.env.LOAN_CACHE_TABLE_NAME)
+    // this.Model = Schemas.LoanSchema(process.env.LOAN_CACHE_TABLE_NAME)
   }
 
   get (userID, loanID) {

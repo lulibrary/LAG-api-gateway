@@ -14,9 +14,10 @@ const userApiFields = [
 class ApiUser extends ApiObject {
   constructor () {
     super({
-      queueUrl: process.env.USERS_QUEUE_URL
+      queueUrl: process.env.USERS_QUEUE_URL,
+      schema: Schemas.UserSchema,
+      tableName: process.env.USER_CACHE_TABLE_NAME
     })
-    this.Model = Schemas.UserSchema(process.env.USER_CACHE_TABLE_NAME)
   }
 
   get (userID) {
