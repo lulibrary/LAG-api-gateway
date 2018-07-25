@@ -45,6 +45,22 @@ functions:
       ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
       USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
       USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+  userLoansHandler:
+    handler: user/get-user-loans.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/loans
+          request:
+            parameters:
+              paths:
+                userID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
+      USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+      LOAN_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.loansTable}
+      LOANS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.loansQueue}
   userLoanHandler:
     handler: user/get-user-loan.handle
     events:
