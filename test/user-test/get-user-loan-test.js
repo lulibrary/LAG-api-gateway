@@ -89,7 +89,7 @@ describe('loan path end to end tests', function () {
     getItemStub.callsArgWith(1, null, testUserRecord)
     // AWS_MOCK.mock('DynamoDB', 'getItem', getItemStub)
     const getParameterStub = sandbox.stub()
-    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
     mocks.push('SSM')
 
@@ -117,7 +117,7 @@ describe('loan path end to end tests', function () {
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
     const getParameterStub = sandbox.stub()
-    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
     mocks.push('SSM')
 
@@ -154,7 +154,7 @@ describe('loan path end to end tests', function () {
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
     const getParameterStub = sandbox.stub()
-    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
     mocks.push('SSM')
 
@@ -187,7 +187,7 @@ describe('loan path end to end tests', function () {
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
     const getParameterStub = sandbox.stub()
-    getParameterStub.callsArgWith(1, null, { Value: 'key' })
+    getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
     mocks.push('SSM')
 
