@@ -81,31 +81,31 @@ custom:
   TableNames:
     stg:
       usersTable: ${env:USER_TABLE_NAME_STG}
-      usersTable: ${env:LOAN_TABLE_NAME_STG}
+      loansTable: ${env:LOAN_TABLE_NAME_STG}
     prod:
-      usersTable: ${env:LOAN_TABLE_NAME_PROD}
-      usersTable: ${env:LOAN_TABLE_NAME_PROD}
+      usersTable: ${env:USER_TABLE_NAME_PROD}
+      loansTable: ${env:LOAN_TABLE_NAME_PROD}
 
   TableArns:
     stg:
-      usersTable: ${env:LOAN_TABLE_ARN_STG}
-      usersTable: ${env:LOAN_TABLE_ARN_STG}
+      usersTable: ${env:USER_TABLE_ARN_STG}
+      loansTable: ${env:LOAN_TABLE_ARN_STG}
     prod:
-      usersTable: ${env:LOAN_TABLE_ARN_PROD}
-      usersTable: ${env:LOAN_TABLE_ARN_PROD}
+      usersTable: ${env:USER_TABLE_ARN_PROD}
+      loansTable: ${env:LOAN_TABLE_ARN_PROD}
   
   QueueUrls:
     stg:
-      usersQueue: ${env:LOAN_QUEUE_URL_STG}
-      usersQueue: ${env:LOAN_QUEUE_URL_STG}
+      usersQueue: ${env:USER_QUEUE_URL_STG}
+      loansQueue: ${env:LOAN_QUEUE_URL_STG}
     prod:
-      usersQueue: ${env:LOAN_QUEUE_URL_PROD}
-      usersQueue: ${env:LOAN_QUEUE_URL_PROD}
+      usersQueue: ${env:USER_QUEUE_URL_PROD}
+      loansQueue: ${env:LOAN_QUEUE_URL_PROD}
 
   QueueArns:
     stg:
-      usersQueue: ${env:LOAN_QUEUE_ARN_STG}
-      usersQueue: ${env:LOAN_QUEUE_ARN_STG}
+      usersQueue: ${env:USER_QUEUE_ARN_STG}
+      loansQueue: ${env:LOAN_QUEUE_ARN_STG}
     prod:
-      usersQueue: ${env:LOAN_QUEUE_ARN_PROD}
-      usersQueue: ${env:LOAN_QUEUE_ARN_PROD}
+      usersQueue: ${env:USER_QUEUE_ARN_PROD}
+      loansQueue: ${env:LOAN_QUEUE_ARN_PROD}
