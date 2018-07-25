@@ -176,7 +176,10 @@ describe('loan path end to end tests', function () {
       .then(() => {
         sendMessageStub.should.have.been.calledWith({
           QueueUrl: testQueueUrl,
-          MessageBody: testLoanID
+          MessageBody: JSON.stringify({
+            userID: testUserID,
+            loanID: testLoanID
+          })
         })
       })
   })

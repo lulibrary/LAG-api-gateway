@@ -30,7 +30,7 @@ class ApiLoan extends ApiObject {
   }
 
   get (userID, loanID) {
-    return this.getFromCache(loanID)
+    return this.getFromCache(userID, loanID)
       .catch(() => this.getFromApi(userID, loanID))
       .then(loan => _pick(loan, loanFields))
   }
@@ -42,9 +42,12 @@ class ApiLoan extends ApiObject {
       .then(loan => loan.data)
   }
 
-  getFromCache (loanID) {
+  getFromCache (userID, loanID) {
     return this.Model.get(loanID)
-      .then(loan => loan || (this.queue.sendMessage(loanID), Promise.reject()))
+      .then(loan => loan || (this.queue.sendMessage(JSON.stringify({
+        userID,
+        loanID
+      })), Promise.reject()))
   }
 }
 
