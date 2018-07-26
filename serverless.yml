@@ -5,7 +5,107 @@ provider:
   runtime: nodejs6.10
   region: ${opt:region}
   stage: ${opt:stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+      Resource:
+        - ${self:custom.TableArns.${opt:stage}.usersTable}
+        - ${self:custom.TableArns.${opt:stage}.loansTable}
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+        - sqs:GetQueueURL
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+      Resource:
+        - ${self:custom.QueueArns.${opt:stage}.usersQueue}
+        - ${self:custom.QueueArns.${opt:stage}.loansQueue}
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource:
+        - ${env:ALMA_API_KEY_ARN}
 
 functions:
-  handler:
-    handler: handler.handle
+  userHandler:
+    handler: src/user/get-user.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}
+          request:
+            parameters:
+              paths:
+                userID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
+      USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+  userLoansHandler:
+    handler: src/user/get-user-loans.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/loans
+          request:
+            parameters:
+              paths:
+                userID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
+      USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+      LOAN_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.loansTable}
+      LOANS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.loansQueue}
+  userLoanHandler:
+    handler: src/user/get-user-loan.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/loans/{loanID}
+          request:
+            parameters:
+              paths:
+                userID: true
+                loanID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      LOAN_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.loansTable}
+      LOANS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.loansQueue}
+
+custom:
+  TableNames:
+    stg:
+      usersTable: ${env:USER_TABLE_NAME_STG}
+      loansTable: ${env:LOAN_TABLE_NAME_STG}
+    prod:
+      usersTable: ${env:USER_TABLE_NAME_PROD}
+      loansTable: ${env:LOAN_TABLE_NAME_PROD}
+
+  TableArns:
+    stg:
+      usersTable: ${env:USER_TABLE_ARN_STG}
+      loansTable: ${env:LOAN_TABLE_ARN_STG}
+    prod:
+      usersTable: ${env:USER_TABLE_ARN_PROD}
+      loansTable: ${env:LOAN_TABLE_ARN_PROD}
+  
+  QueueUrls:
+    stg:
+      usersQueue: ${env:USER_QUEUE_URL_STG}
+      loansQueue: ${env:LOAN_QUEUE_URL_STG}
+    prod:
+      usersQueue: ${env:USER_QUEUE_URL_PROD}
+      loansQueue: ${env:LOAN_QUEUE_URL_PROD}
+
+  QueueArns:
+    stg:
+      usersQueue: ${env:USER_QUEUE_ARN_STG}
+      loansQueue: ${env:LOAN_QUEUE_ARN_STG}
+    prod:
+      usersQueue: ${env:USER_QUEUE_ARN_PROD}
+      loansQueue: ${env:LOAN_QUEUE_ARN_PROD}
