@@ -57,7 +57,7 @@ const mockTable = (tableName) => {
 }
 
 describe('user/<userID>/loans path end to end tests', function () {
-  this.timeout(10000)
+  this.timeout(5000)
 
   before(() => {
     mockTable(testTableName)
@@ -178,7 +178,7 @@ describe('user/<userID>/loans path end to end tests', function () {
       })
   })
 
-  it('should return an error if it cannot get the loan from the cache or the API', () => {
+  it('should return an error if it cannot get the user from the cache or the API', () => {
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     mocks.push('SQS')
     getItemStub.callsArgWith(1, null, { })
@@ -324,6 +324,73 @@ describe('user/<userID>/loans path end to end tests', function () {
             })
           }
         })
+      })
+  })
+
+  it('should resolve with any existing loans if an Alma API call rejects', () => {
+    const testUserID = `test_user_${uuid()}`
+    const testLoanIDs = [uuid(), uuid(), uuid(), uuid(), uuid()]
+
+    const getParameterStub = sandbox.stub()
+    getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
+    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+    mocks.push('SSM')
+    AWS_MOCK.mock('SQS', 'sendMessage', {})
+    mocks.push('SQS')
+
+    getItemStub.onCall(0).callsArgWith(1, null, {
+      Item: {
+        primary_id: {
+          S: testUserID
+        },
+        expiry_date: {
+          N: '1600000000'
+        },
+        loan_ids: testLoanIDs
+      }
+    })
+
+    const loanItem = (id) => {
+      return {
+        Item: {
+          loan_id: {
+            S: id
+          }
+        }
+      }
+    }
+
+    const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
+
+    alma.get(`/almaws/v1/users/${testUserID}/loans/${testLoanIDs[0]}?format=json`)
+      .reply(400, {
+        message: 'item not found'
+      })
+    getItemStub.onCall(1).callsArgWith(1, null, {})
+    testLoanIDs.slice(1).forEach((loanID, index) => {
+      getItemStub.onCall(index + 2).callsArgWith(1, null, index % 2 === 0 ? loanItem(loanID) : {})
+
+      if (index % 2 === 1) {
+        alma.get(`/almaws/v1/users/${testUserID}/loans/${loanID}?format=json`)
+          .reply(200, {
+            loan_id: loanID
+          })
+      }
+    })
+
+    return handle({
+      pathParameters: {
+        userID: testUserID
+      }
+    }, {})
+      .then(res => {
+        JSON.parse(res.body).should.deep.equal(
+          testLoanIDs.slice(1).map(id => {
+            return {
+              loan_id: id
+            }
+          })
+        )
       })
   })
 })

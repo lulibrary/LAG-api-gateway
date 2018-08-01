@@ -5,6 +5,8 @@ const ApiObject = require('./api-object')
 const _pick = require('lodash.pick')
 const apiError = require('../../api-error')
 
+const ApiUserLoan = require('./api-user-loan')
+
 const userApiFields = [
   'primary_id',
   'loans',
@@ -23,6 +25,21 @@ class ApiUser extends ApiObject {
   get (userID) {
     return this.getFromCache(userID)
       .catch(() => this.getFromApi(userID))
+  }
+
+  getLoans (userID) {
+    const loanResolver = new ApiUserLoan()
+
+    return this.getLoanIDs(userID)
+      .then(loans => {
+        return Promise.all(
+          loans.map(loanID =>
+            loanResolver
+              .get(userID, loanID)
+              .catch(e => null))
+        )
+          .then(loans => loans.filter(loan => loan))
+      })
   }
 
   getLoanIDs (userID) {
