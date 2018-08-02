@@ -1,9 +1,9 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
+const HttpError = require('node-http-error')
 
 const ApiObject = require('./api-object')
 
 const _pick = require('lodash.pick')
-const apiError = require('../../api-error')
 
 const loanFields = [
   'loan_id',
@@ -38,7 +38,9 @@ class ApiLoan extends ApiObject {
   getFromApi (userID, loanID) {
     return this._ensureApi()
       .then(() => this.almaApi.users.for(userID).getLoan(loanID))
-      .catch(apiError)
+      .catch(e => {
+        throw new HttpError(400, 'No loan with matching ID found')
+      })
       .then(loan => loan.data)
   }
 

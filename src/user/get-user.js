@@ -5,7 +5,6 @@ const ApiUser = require('./api-objects/api-user')
 module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
 
-  // handleUser(userID)
   new ApiUser().get(userID)
     .then(response => {
       callback(null, {

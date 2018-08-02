@@ -1,9 +1,9 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
+const HttpError = require('node-http-error')
 
 const ApiObject = require('./api-object')
 
 const _pick = require('lodash.pick')
-const apiError = require('../../api-error')
 
 const ApiUserLoan = require('./api-user-loan')
 
@@ -20,6 +20,7 @@ class ApiUser extends ApiObject {
       schema: Schemas.UserSchema,
       tableName: process.env.USER_CACHE_TABLE_NAME
     })
+    this.almaReachable = true
   }
 
   get (userID) {
@@ -36,7 +37,9 @@ class ApiUser extends ApiObject {
           loans.map(loanID =>
             loanResolver
               .get(userID, loanID)
-              .catch(e => null))
+              .catch(e => {
+                return null
+              }))
         )
           .then(loans => loans.filter(loan => loan))
       })
@@ -81,6 +84,10 @@ const formatCacheUser = user => {
     loans: user.loan_ids,
     requests: user.request_ids
   }
+}
+
+const apiError = e => {
+  throw new HttpError(400, 'No user with matching ID found')
 }
 
 module.exports = ApiUser
