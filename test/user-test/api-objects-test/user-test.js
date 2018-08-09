@@ -42,8 +42,9 @@ describe('api user class tests', () => {
   describe('get method tests', () => {
     it('should call getFromCache with the provided ID', () => {
       const getFromCacheStub = stubMethod('getFromCache')
-      const testApiUser = new ApiUser()
+      wire('formatCacheUser')
 
+      const testApiUser = new ApiUser()
       const testUserID = uuid()
 
       return testApiUser.get(testUserID)
@@ -56,6 +57,7 @@ describe('api user class tests', () => {
       stubMethod('getFromCache', false)
       const getFromApiStub = stubMethod('getFromApi')
       const testApiUser = new ApiUser()
+      sandbox.stub(testApiUser.queue, 'sendMessage').resolves()
 
       const testUserID = uuid()
 

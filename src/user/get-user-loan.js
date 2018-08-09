@@ -6,7 +6,6 @@ module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
   const loanID = event.pathParameters.loanID
 
-  // handleUserLoan(userID, loanID)
   new ApiUserLoan().get(userID, loanID)
     .then(response => {
       callback(null, {

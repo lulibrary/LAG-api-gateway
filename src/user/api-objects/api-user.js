@@ -1,9 +1,12 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
+const HttpError = require('node-http-error')
 
 const ApiObject = require('./api-object')
 
 const _pick = require('lodash.pick')
-const apiError = require('../../api-error')
+
+const ApiUserLoan = require('./api-user-loan')
+const ApiUserRequest = require('./api-user-request')
 
 const userApiFields = [
   'primary_id',
@@ -18,43 +21,56 @@ class ApiUser extends ApiObject {
       schema: Schemas.UserSchema,
       tableName: process.env.USER_CACHE_TABLE_NAME
     })
+    this.apiCall = (userID) => this.almaApi.users.get(userID)
+    this.errorMessage = 'No user with matching ID found'
   }
 
   get (userID) {
     return this.getFromCache(userID)
-      .catch(() => this.getFromApi(userID))
-  }
-
-  getLoanIDs (userID) {
-    return this.getFromCache(userID)
-      .catch(() => this.getLoansFromApi(userID))
-      .then(user => user.loans)
-  }
-
-  getFromApi (userID) {
-    return this._ensureApi()
-      .then(() => this.almaApi.users.get(userID))
-      .catch(apiError)
-      .then(user => _pick(user.data, userApiFields))
-  }
-
-  getLoansFromApi (userID) {
-    return this._ensureApi()
-      .then(() => this.almaApi.users.for(userID).loans())
-      .catch(apiError)
-      .then(userLoans => {
-        return {
-          loans: Array.from(userLoans.keys())
-        }
+      .then(formatCacheUser)
+      .catch(() => {
+        this.queue.sendMessage(userID)
+        return this.getFromApi(userID)
+          .then(user => _pick(user, userApiFields))
       })
   }
 
-  getFromCache (userID) {
-    return this.Model.get(userID)
-      .then(user => user
-        ? formatCacheUser(user)
-        : (this.queue.sendMessage(userID), Promise.reject())
+  getLoans (userID) {
+    return this._getResources(userID, ApiUserLoan, 'loan_ids')
+  }
+
+  getRequests (userID) {
+    return this._getResources(userID, ApiUserRequest, 'request_ids')
+  }
+
+  _getResources (userID, ResolverClass, cacheIDsField) {
+    const resolver = new ResolverClass()
+    return this._getResourceIDs(userID, cacheIDsField, resolver)
+      .then(IDs => this._resolveResources(userID, IDs, resolver))
+  }
+
+  _getResourceIDs (userID, resourceName, resolver) {
+    return this.getFromCache(userID)
+      .then(user => user[resourceName])
+      .catch(() => {
+        this.queue.sendMessage(userID)
+        return this._getResourceIDsFromApi(userID, resolver)
+      })
+  }
+
+  _getResourceIDsFromApi (userID, resolver) {
+    return resolver.getAllFromApi(userID)
+      .then(resources => Array.from(resources.keys()))
+  }
+
+  _resolveResources (userID, resourceIDs, resolver) {
+    return Promise.all(
+      resourceIDs.map(resourceID => resolver
+        .get(userID, resourceID)
+        .catch(e => null)
       )
+    )
+      .then(resources => resources.filter(resource => resource))
   }
 }
 
@@ -64,6 +80,10 @@ const formatCacheUser = user => {
     loans: user.loan_ids,
     requests: user.request_ids
   }
+}
+
+const apiError = e => {
+  throw new HttpError(400, 'No user with matching ID found')
 }
 
 module.exports = ApiUser

@@ -17,17 +17,17 @@ const AWS_MOCK = require('aws-sdk-mock')
 let mocks = []
 
 process.env.ALMA_API_KEY_NAME = 'key'
-const testTableName = `test_loan_table_${uuid()}`
-process.env.LOAN_CACHE_TABLE_NAME = testTableName
-const testQueueUrl = `test_loans_queue_${uuid()}`
-process.env.LOANS_QUEUE_URL = testQueueUrl
+const testTableName = `test_request_table_${uuid()}`
+process.env.REQUEST_CACHE_TABLE_NAME = testTableName
+const testQueueUrl = `test_requests_queue_${uuid()}`
+process.env.REQUESTS_QUEUE_URL = testQueueUrl
 
 let stubs = require('../mocks.js')
 const getItemStub = stubs.getItemStub
 const describeTableStub = stubs.describeTableStub
 
 // Module under test
-let userPathHandler = require('../../src/user/get-user-loan')
+let userPathHandler = require('../../src/user/get-user-request')
 const handle = (event, ctx) => new Promise((resolve, reject) => {
   userPathHandler.handle(event, ctx, (err, res) => {
     return err ? reject(err) : resolve(res)
@@ -38,11 +38,11 @@ const mockTable = (tableName) => {
   describeTableStub.callsArgWith(1, null, {
     Table: {
       AttributeDefinitions: [{
-        AttributeName: 'loan_id',
+        AttributeName: 'request_id',
         KeyType: 'HASH'
       }],
       KeySchema: [{
-        AttributeName: 'loan_id',
+        AttributeName: 'request_id',
         KeyType: 'HASH'
       }],
       ItemCount: 100,
@@ -57,7 +57,7 @@ const mockTable = (tableName) => {
   })
 }
 
-describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
+describe('/user/<userID>/requests/<requestID> path end to end tests', function () {
   this.timeout(10000)
 
   before(() => {
@@ -71,15 +71,15 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
     mocks = []
   })
 
-  it('should query the Cache for a Loan record', () => {
+  it('should query the Cache for a Request record', () => {
     process.env.ALMA_KEY = 'key'
 
     const testUserID = `test_user_${uuid()}`
-    const testLoanID = `test_loan_${uuid()}`
+    const testRequestID = `test_request_${uuid()}`
     const testUserRecord = {
       Item: {
-        loan_id: {
-          S: testLoanID
+        request_id: {
+          S: testRequestID
         },
         expiry_date: {
           N: '1600000000'
@@ -96,22 +96,22 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
     return handle({
       pathParameters: {
         userID: testUserID,
-        loanID: testLoanID
+        requestID: testRequestID
       }
     }, {})
       .then(res => {
         getItemStub.should.have.been.calledWith({
           TableName: testTableName,
           Key: {
-            loan_id: {
-              S: testLoanID
+            request_id: {
+              S: testRequestID
             }
           }
         })
       })
   })
 
-  it('should query the Alma API if no Loan is in the Cache', () => {
+  it('should query the Alma API if no Request is in the Cache', () => {
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
@@ -122,7 +122,7 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
     mocks.push('SSM')
 
     const testUserID = `test_user_${uuid()}`
-    const testLoanID = `test_loan_${uuid()}`
+    const testRequestID = `test_request_${uuid()}`
 
     let urlQueries = []
 
@@ -132,21 +132,21 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
         return true
       })
       .reply(200, {
-        loan_id: testLoanID
+        request_id: testRequestID
       })
 
     return handle({
       pathParameters: {
         userID: testUserID,
-        loanID: testLoanID
+        requestID: testRequestID
       }
     }, {})
       .then(() => {
-        urlQueries.should.include(`/almaws/v1/users/${testUserID}/loans/${testLoanID}?format=json`)
+        urlQueries.should.include(`/almaws/v1/users/${testUserID}/requests/${testRequestID}?format=json`)
       })
   })
 
-  // it('should call SQS#sendMessage if no Loan is in the Cache', () => {
+  // it('should call SQS#sendMessage if no Request is in the Cache', () => {
   //   const sendMessageStub = sandbox.stub()
   //   sendMessageStub.callsArgWith(1, null, true)
   //   AWS_MOCK.mock('SQS', 'sendMessage', sendMessageStub)
@@ -159,18 +159,18 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
   //   mocks.push('SSM')
 
   //   const testUserID = `test_user_${uuid()}`
-  //   const testLoanID = `test_loan_${uuid()}`
+  //   const testRequestID = `test_request_${uuid()}`
 
   //   nock('https://api-eu.hosted.exlibrisgroup.com')
   //     .get(uri => true)
   //     .reply(200, {
-  //       loan_id: testLoanID
+  //       request_id: testRequestID
   //     })
 
   //   return handle({
   //     pathParameters: {
   //       userID: testUserID,
-  //       loanID: testLoanID
+  //       requestID: testRequestID
   //     }
   //   })
   //     .then(() => {
@@ -178,13 +178,13 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
   //         QueueUrl: testQueueUrl,
   //         MessageBody: JSON.stringify({
   //           userID: testUserID,
-  //           loanID: testLoanID
+  //           requestID: testRequestID
   //         })
   //       })
   //     })
   // })
 
-  it('should return an error if it cannot get the loan from the cache or the API', () => {
+  it('should return an error if it cannot get the request from the cache or the API', () => {
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
@@ -197,7 +197,7 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
     // sandbox.stub(console, 'log')
 
     const testUserID = `test_user_${uuid()}`
-    const testLoanID = `test_loan_${uuid()}`
+    const testRequestID = `test_request_${uuid()}`
 
     let urlQueries = []
 
@@ -213,7 +213,7 @@ describe('/user/<userID>/loans/<loanID> path end to end tests', function () {
     return handle({
       pathParameters: {
         userID: testUserID,
-        loanID: testLoanID
+        requestID: testRequestID
       }
     }, {})
       .catch(e => {

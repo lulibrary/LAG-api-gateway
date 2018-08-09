@@ -15,6 +15,7 @@ provider:
       Resource:
         - ${self:custom.TableArns.${opt:stage}.usersTable}
         - ${self:custom.TableArns.${opt:stage}.loansTable}
+        - ${self:custom.TableArns.${opt:stage}.requestsTable}
     - Effect: Allow
       Action:
         - sqs:SendMessage
@@ -24,6 +25,7 @@ provider:
       Resource:
         - ${self:custom.QueueArns.${opt:stage}.usersQueue}
         - ${self:custom.QueueArns.${opt:stage}.loansQueue}
+        - ${self:custom.QueueArns.${opt:stage}.requestsQueue}
     - Effect: Allow
       Action:
         - ssm:GetParameter
@@ -76,36 +78,75 @@ functions:
       ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
       LOAN_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.loansTable}
       LOANS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.loansQueue}
+  userRequestsHandler:
+    handler: src/user/get-user-requests.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/requests
+          request:
+            parameters:
+              paths:
+                userID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
+      USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+      REQUEST_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.requestsTable}
+      REQUESTS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.requestsQueue}
+  userRequestHandler:
+    handler: src/user/get-user-request.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/requests/{requestID}
+          request:
+            parameters:
+              paths:
+                userID: true
+                requestID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      REQUEST_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.requestsTable}
+      REQUESTS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.requestsQueue}
 
 custom:
   TableNames:
     stg:
       usersTable: ${env:USER_TABLE_NAME_STG}
       loansTable: ${env:LOAN_TABLE_NAME_STG}
+      requestsTable: ${env:REQUEST_TABLE_NAME_STG}
     prod:
       usersTable: ${env:USER_TABLE_NAME_PROD}
       loansTable: ${env:LOAN_TABLE_NAME_PROD}
+      requestsTable: ${env:REQUEST_TABLE_NAME_PROD}
 
   TableArns:
     stg:
       usersTable: ${env:USER_TABLE_ARN_STG}
       loansTable: ${env:LOAN_TABLE_ARN_STG}
+      requestsTable: ${env:REQUEST_TABLE_ARN_STG}
     prod:
       usersTable: ${env:USER_TABLE_ARN_PROD}
       loansTable: ${env:LOAN_TABLE_ARN_PROD}
+      requestsTable: ${env:REQUEST_TABLE_ARN_PROD}
   
   QueueUrls:
     stg:
       usersQueue: ${env:USER_QUEUE_URL_STG}
       loansQueue: ${env:LOAN_QUEUE_URL_STG}
+      requestsQueue: ${env:REQUEST_QUEUE_URL_STG}
     prod:
       usersQueue: ${env:USER_QUEUE_URL_PROD}
       loansQueue: ${env:LOAN_QUEUE_URL_PROD}
+      requestsQueue: ${env:REQUEST_QUEUE_URL_PROD}
 
   QueueArns:
     stg:
       usersQueue: ${env:USER_QUEUE_ARN_STG}
       loansQueue: ${env:LOAN_QUEUE_ARN_STG}
+      requestsQueue: ${env:REQUEST_QUEUE_ARN_STG}
     prod:
       usersQueue: ${env:USER_QUEUE_ARN_PROD}
       loansQueue: ${env:LOAN_QUEUE_ARN_PROD}
+      requestsQueue: ${env:REQUEST_QUEUE_ARN_PROD}

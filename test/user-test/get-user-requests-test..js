@@ -19,14 +19,14 @@ let mocks = []
 process.env.ALMA_API_KEY_NAME = 'key'
 const testTableName = `test_user_table_${uuid()}`
 const testUsersQueueUrl = `test_users_queue_${uuid()}`
-const testLoanTableName = `test_loan_table_${uuid()}`
+const testRequestTableName = `test_request_table_${uuid()}`
 
 let stubs = require('../mocks.js')
 const getItemStub = stubs.getItemStub
 const describeTableStub = stubs.describeTableStub
 
 // Module under test
-let userPathHandler = require('../../src/user/get-user-loans')
+let userPathHandler = require('../../src/user/get-user-requests')
 const handle = (event, ctx) => new Promise((resolve, reject) => {
   userPathHandler.handle(event, ctx, (err, res) => {
     return err ? reject(err) : resolve(res)
@@ -56,15 +56,15 @@ const mockTable = (tableName) => {
   })
 }
 
-describe('user/<userID>/loans path end to end tests', function () {
+describe('user/<userID>/requests path end to end tests', function () {
   this.timeout(5000)
 
   before(() => {
     mockTable(testTableName)
     process.env.USER_CACHE_TABLE_NAME = testTableName
-    process.env.LOAN_CACHE_TABLE_NAME = testLoanTableName
+    process.env.REQUEST_CACHE_TABLE_NAME = testRequestTableName
     process.env.USERS_QUEUE_URL = testUsersQueueUrl
-    process.env.LOANS_QUEUE_URL = uuid()
+    process.env.REQUESTS_QUEUE_URL = uuid()
   })
 
   afterEach(() => {
@@ -86,7 +86,7 @@ describe('user/<userID>/loans path end to end tests', function () {
         expiry_date: {
           N: '1600000000'
         },
-        loan_ids: []
+        request_ids: []
       }
     }
     getItemStub.callsArgWith(1, null, testUserRecord)
@@ -133,7 +133,7 @@ describe('user/<userID>/loans path end to end tests', function () {
         return true
       })
       .reply(200, {
-        item_loan: []
+        item_request: []
       })
 
     return handle({
@@ -142,7 +142,7 @@ describe('user/<userID>/loans path end to end tests', function () {
       }
     }, {})
       .then(() => {
-        urlQueries.should.include(`/almaws/v1/users/${testUserID}/loans?format=json`)
+        urlQueries.should.include(`/almaws/v1/users/${testUserID}/requests?format=json`)
       })
   })
 
@@ -162,7 +162,7 @@ describe('user/<userID>/loans path end to end tests', function () {
     nock('https://api-eu.hosted.exlibrisgroup.com')
       .get(uri => true)
       .reply(200, {
-        item_loan: []
+        item_request: []
       })
 
     return handle({
@@ -191,7 +191,7 @@ describe('user/<userID>/loans path end to end tests', function () {
     // sandbox.stub(console, 'log')
 
     const testUserID = `test_user_${uuid()}`
-    const testLoanID = `test_loan_${uuid()}`
+    const testRequestID = `test_request_${uuid()}`
 
     let urlQueries = []
 
@@ -207,7 +207,7 @@ describe('user/<userID>/loans path end to end tests', function () {
     return handle({
       pathParameters: {
         userID: testUserID,
-        loanID: testLoanID
+        requestID: testRequestID
       }
     }, {})
       .catch(e => {
@@ -215,9 +215,9 @@ describe('user/<userID>/loans path end to end tests', function () {
       })
   })
 
-  it('should query the Cache for each Loan record on the User', () => {
+  it('should query the Cache for each Request record on the User', () => {
     const testUserID = `test_user_${uuid()}`
-    const testLoanIDs = [uuid(), uuid(), uuid(), uuid()]
+    const testRequestIDs = [uuid(), uuid(), uuid(), uuid()]
 
     getItemStub.onCall(0).callsArgWith(1, null, {
       Item: {
@@ -227,14 +227,14 @@ describe('user/<userID>/loans path end to end tests', function () {
         expiry_date: {
           N: '1600000000'
         },
-        loan_ids: testLoanIDs
+        request_ids: testRequestIDs
       }
     })
 
-    testLoanIDs.forEach((id, index) => {
+    testRequestIDs.forEach((id, index) => {
       getItemStub.onCall(index + 1).callsArgWith(1, null, {
         Item: {
-          loan_id: {
+          request_id: {
             S: id
           }
         }
@@ -247,12 +247,12 @@ describe('user/<userID>/loans path end to end tests', function () {
       }
     }, {})
       .then(() => {
-        testLoanIDs.forEach(loanID => {
+        testRequestIDs.forEach(requestID => {
           getItemStub.should.have.been.calledWith({
-            TableName: testLoanTableName,
+            TableName: testRequestTableName,
             Key: {
-              loan_id: {
-                S: loanID
+              request_id: {
+                S: requestID
               }
             }
           })
@@ -260,9 +260,9 @@ describe('user/<userID>/loans path end to end tests', function () {
       })
   })
 
-  it('should call the Alma Api for any Loans which are not in the Cache', () => {
+  it('should call the Alma Api for any Requests which are not in the Cache', () => {
     const testUserID = `test_user_${uuid()}`
-    const testLoanIDs = [uuid(), uuid(), uuid(), uuid()]
+    const testRequestIDs = [uuid(), uuid(), uuid(), uuid()]
 
     const getParameterStub = sandbox.stub()
     getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
@@ -279,14 +279,14 @@ describe('user/<userID>/loans path end to end tests', function () {
         expiry_date: {
           N: '1600000000'
         },
-        loan_ids: testLoanIDs
+        request_ids: testRequestIDs
       }
     })
 
-    const loanItem = (id) => {
+    const requestItem = (id) => {
       return {
         Item: {
-          loan_id: {
+          request_id: {
             S: id
           }
         }
@@ -295,13 +295,13 @@ describe('user/<userID>/loans path end to end tests', function () {
 
     const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
 
-    testLoanIDs.forEach((loanID, index) => {
-      getItemStub.onCall(index + 1).callsArgWith(1, null, index % 2 === 0 ? loanItem(loanID) : {})
+    testRequestIDs.forEach((requestID, index) => {
+      getItemStub.onCall(index + 1).callsArgWith(1, null, index % 2 === 0 ? requestItem(requestID) : {})
 
       if (index % 2 === 1) {
-        alma.get(`/almaws/v1/users/${testUserID}/loans/${loanID}?format=json`)
+        alma.get(`/almaws/v1/users/${testUserID}/requests/${requestID}?format=json`)
           .reply(200, {
-            loan_id: loanID
+            request_id: requestID
           })
       }
     })
@@ -312,13 +312,13 @@ describe('user/<userID>/loans path end to end tests', function () {
       }
     }, {})
       .then(res => {
-        testLoanIDs.forEach((loanID, index) => {
+        testRequestIDs.forEach((requestID, index) => {
           if (index % 2 === 0) {
             getItemStub.should.have.been.calledWith({
-              TableName: testLoanTableName,
+              TableName: testRequestTableName,
               Key: {
-                loan_id: {
-                  S: loanID
+                request_id: {
+                  S: requestID
                 }
               }
             })
@@ -327,9 +327,9 @@ describe('user/<userID>/loans path end to end tests', function () {
       })
   })
 
-  it('should resolve with any existing loans if an Alma API call rejects', () => {
+  it('should resolve with any existing requests if an Alma API call rejects', () => {
     const testUserID = `test_user_${uuid()}`
-    const testLoanIDs = [uuid(), uuid(), uuid(), uuid(), uuid()]
+    const testRequestIDs = [uuid(), uuid(), uuid(), uuid(), uuid()]
 
     const getParameterStub = sandbox.stub()
     getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
@@ -346,14 +346,14 @@ describe('user/<userID>/loans path end to end tests', function () {
         expiry_date: {
           N: '1600000000'
         },
-        loan_ids: testLoanIDs
+        request_ids: testRequestIDs
       }
     })
 
-    const loanItem = (id) => {
+    const requestItem = (id) => {
       return {
         Item: {
-          loan_id: {
+          request_id: {
             S: id
           }
         }
@@ -362,18 +362,18 @@ describe('user/<userID>/loans path end to end tests', function () {
 
     const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
 
-    alma.get(`/almaws/v1/users/${testUserID}/loans/${testLoanIDs[0]}?format=json`)
+    alma.get(`/almaws/v1/users/${testUserID}/requests/${testRequestIDs[0]}?format=json`)
       .reply(400, {
         message: 'item not found'
       })
     getItemStub.onCall(1).callsArgWith(1, null, {})
-    testLoanIDs.slice(1).forEach((loanID, index) => {
-      getItemStub.onCall(index + 2).callsArgWith(1, null, index % 2 === 0 ? loanItem(loanID) : {})
+    testRequestIDs.slice(1).forEach((requestID, index) => {
+      getItemStub.onCall(index + 2).callsArgWith(1, null, index % 2 === 0 ? requestItem(requestID) : {})
 
       if (index % 2 === 1) {
-        alma.get(`/almaws/v1/users/${testUserID}/loans/${loanID}?format=json`)
+        alma.get(`/almaws/v1/users/${testUserID}/requests/${requestID}?format=json`)
           .reply(200, {
-            loan_id: loanID
+            request_id: requestID
           })
       }
     })
@@ -385,9 +385,9 @@ describe('user/<userID>/loans path end to end tests', function () {
     }, {})
       .then(res => {
         JSON.parse(res.body).should.deep.equal(
-          testLoanIDs.slice(1).map(id => {
+          testRequestIDs.slice(1).map(id => {
             return {
-              loan_id: id
+              request_id: id
             }
           })
         )

@@ -1,11 +1,12 @@
 'use strict'
 const handleError = require('../handle-error')
-const ApiUser = require('./api-objects/api-user')
+const ApiUserRequest = require('./api-objects/api-user-request')
 
 module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
+  const requestID = event.pathParameters.requestID
 
-  new ApiUser().get(userID)
+  new ApiUserRequest().get(userID, requestID)
     .then(response => {
       callback(null, {
         statusCode: 200,
@@ -13,6 +14,7 @@ module.exports.handle = (event, context, callback) => {
       })
     })
     .catch(e => {
+      console.log(e)
       callback(handleError(e))
     })
 }
