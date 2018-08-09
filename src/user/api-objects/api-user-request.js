@@ -10,20 +10,13 @@ class ApiRequest extends ApiObject {
       schema: Schemas.RequestSchema,
       tableName: process.env.REQUEST_CACHE_TABLE_NAME
     })
+    this.apiCall = (userID, requestID) => this.almaApi.users.for(userID).getRequest(requestID)
+    this.errorMessage = 'No request with matching ID found'
   }
 
   get (userID, requestID) {
     return this.getFromCache(requestID)
       .catch(() => this.getFromApi(userID, requestID))
-  }
-
-  getFromApi (userID, requestID) {
-    return this._ensureApi()
-      .then(() => this.almaApi.users.for(userID).getRequest(requestID))
-      .catch(e => {
-        throw new HttpError(400, 'No request with matching ID found')
-      })
-      .then(request => request.data)
   }
 
   getAllFromApi (userID) {

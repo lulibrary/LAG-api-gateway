@@ -27,6 +27,8 @@ class ApiLoan extends ApiObject {
       schema: Schemas.LoanSchema,
       tableName: process.env.LOAN_CACHE_TABLE_NAME
     })
+    this.apiCall = (userID, loanID) => this.almaApi.users.for(userID).getLoan(loanID)
+    this.errorMessage = 'No loan with matching ID found'
   }
 
   get (userID, loanID) {
@@ -35,14 +37,6 @@ class ApiLoan extends ApiObject {
       .then(loan => _pick(loan, loanFields))
   }
 
-  getFromApi (userID, loanID) {
-    return this._ensureApi()
-      .then(() => this.almaApi.users.for(userID).getLoan(loanID))
-      .catch(e => {
-        throw new HttpError(400, 'No loan with matching ID found')
-      })
-      .then(loan => loan.data)
-  }
   getAllFromApi (userID) {
     return this._ensureApi()
       .then(() => this.almaApi.users.for(userID).loans())

@@ -21,6 +21,8 @@ class ApiUser extends ApiObject {
       schema: Schemas.UserSchema,
       tableName: process.env.USER_CACHE_TABLE_NAME
     })
+    this.apiCall = (userID) => this.almaApi.users.get(userID)
+    this.errorMessage = 'No user with matching ID found'
   }
 
   get (userID) {
@@ -29,6 +31,7 @@ class ApiUser extends ApiObject {
       .catch(() => {
         this.queue.sendMessage(userID)
         return this.getFromApi(userID)
+          .then(user => _pick(user, userApiFields))
       })
   }
 
@@ -53,13 +56,6 @@ class ApiUser extends ApiObject {
   getRequestIDs (userID) {
     const requestResolver = new ApiUserRequest()
     return this._getResourceIDs(userID, 'request_ids', requestResolver)
-  }
-
-  getFromApi (userID) {
-    return this._ensureApi()
-      .then(() => this.almaApi.users.get(userID))
-      .catch(apiError)
-      .then(user => _pick(user.data, userApiFields))
   }
 
   _getResourceIDs (userID, resourceName, resolver) {

@@ -1,4 +1,5 @@
 const { Queue } = require('@lulibrary/lag-utils')
+const HttpError = require('node-http-error')
 
 const AlmaClient = require('alma-api-wrapper')
 const getAlmaApiKey = require('../../get-alma-api-key')
@@ -12,6 +13,15 @@ class ApiObject {
   getFromCache (ID) {
     return this.Model.get(ID)
       .then(item => item || Promise.reject())
+  }
+
+  getFromApi (...ids) {
+    return this._ensureApi()
+      .then(() => this.apiCall(...ids))
+      .catch(() => {
+        throw new HttpError(400, this.errorMessage)
+      })
+      .then(item => item.data)
   }
 
   _ensureApi () {
