@@ -1,9 +1,7 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
-const HttpError = require('node-http-error')
+const _pick = require('lodash.pick')
 
 const ApiUserObject = require('./api-user-object')
-
-const _pick = require('lodash.pick')
 
 const loanFields = [
   'loan_id',
