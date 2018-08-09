@@ -51,6 +51,14 @@ class ApiLoan extends ApiObject {
         loanID
       })), Promise.reject()))
   }
+
+  getAllFromApi (userID) {
+    return this._ensureApi()
+      .then(() => this.almaApi.users.for(userID).loans())
+      .catch(e => {
+        throw new HttpError(400, 'No user with matching ID found')
+      })
+  }
 }
 
 module.exports = ApiLoan

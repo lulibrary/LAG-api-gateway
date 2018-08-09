@@ -33,6 +33,14 @@ class ApiRequest extends ApiObject {
         requestID
       })), Promise.reject()))
   }
+
+  getAllFromApi (userID) {
+    return this._ensureApi()
+      .then(() => this.almaApi.users.for(userID).requests())
+      .catch(e => {
+        throw new HttpError(400, 'No user with matching ID found')
+      })
+  }
 }
 
 module.exports = ApiRequest
