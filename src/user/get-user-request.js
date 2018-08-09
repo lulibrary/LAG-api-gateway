@@ -6,7 +6,6 @@ module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
   const requestID = event.pathParameters.requestID
 
-  // handleUserRequest(userID, requestID)
   new ApiUserRequest().get(userID, requestID)
     .then(response => {
       callback(null, {
