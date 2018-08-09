@@ -36,15 +36,17 @@ class ApiUser extends ApiObject {
   }
 
   getLoans (userID) {
-    const loanResolver = new ApiUserLoan()
-    return this._getResourceIDs(userID, 'loan_ids', loanResolver)
-      .then(loanIDs => this._resolveResources(userID, loanIDs, loanResolver))
+    return this._getResources(userID, ApiUserLoan, 'loan_ids')
   }
 
   getRequests (userID) {
-    const requestResolver = new ApiUserRequest()
-    return this._getResourceIDs(userID, 'request_ids', requestResolver)
-      .then(requestIDs => this._resolveResources(userID, requestIDs, requestResolver))
+    return this._getResources(userID, ApiUserRequest, 'request_ids')
+  }
+
+  _getResources (userID, ResolverClass, cacheIDsField) {
+    const resolver = new ResolverClass()
+    return this._getResourceIDs(userID, cacheIDsField, resolver)
+      .then(IDs => this._resolveResources(userID, IDs, resolver))
   }
 
   _getResourceIDs (userID, resourceName, resolver) {
