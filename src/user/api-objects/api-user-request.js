@@ -3,7 +3,7 @@ const HttpError = require('node-http-error')
 
 const ApiObject = require('./api-object')
 
-class ApiLoan extends ApiObject {
+class ApiRequest extends ApiObject {
   constructor () {
     super({
       queueUrl: process.env.REQUESTS_QUEUE_URL,
@@ -12,27 +12,27 @@ class ApiLoan extends ApiObject {
     })
   }
 
-  get (userID, loanID) {
-    return this.getFromCache(userID, loanID)
-      .catch(() => this.getFromApi(userID, loanID))
+  get (userID, requestID) {
+    return this.getFromCache(userID, requestID)
+      .catch(() => this.getFromApi(userID, requestID))
   }
 
-  getFromApi (userID, loanID) {
+  getFromApi (userID, requestID) {
     return this._ensureApi()
-      .then(() => this.almaApi.users.for(userID).getLoan(loanID))
+      .then(() => this.almaApi.users.for(userID).getRequest(requestID))
       .catch(e => {
-        throw new HttpError(400, 'No loan with matching ID found')
+        throw new HttpError(400, 'No request with matching ID found')
       })
-      .then(loan => loan.data)
+      .then(request => request.data)
   }
 
-  getFromCache (userID, loanID) {
-    return this.Model.get(loanID)
-      .then(loan => loan || (this.queue.sendMessage(JSON.stringify({
+  getFromCache (userID, requestID) {
+    return this.Model.get(requestID)
+      .then(request => request || (this.queue.sendMessage(JSON.stringify({
         userID,
-        loanID
+        requestID
       })), Promise.reject()))
   }
 }
 
-module.exports = ApiLoan
+module.exports = ApiRequest
