@@ -13,7 +13,7 @@ class ApiRequest extends ApiObject {
   }
 
   get (userID, requestID) {
-    return this.getFromCache(userID, requestID)
+    return this.getFromCache(requestID)
       .catch(() => this.getFromApi(userID, requestID))
   }
 
@@ -24,14 +24,6 @@ class ApiRequest extends ApiObject {
         throw new HttpError(400, 'No request with matching ID found')
       })
       .then(request => request.data)
-  }
-
-  getFromCache (userID, requestID) {
-    return this.Model.get(requestID)
-      .then(request => request || (this.queue.sendMessage(JSON.stringify({
-        userID,
-        requestID
-      })), Promise.reject()))
   }
 
   getAllFromApi (userID) {

@@ -8,6 +8,12 @@ class ApiObject {
     this.queue = new Queue({ url: config.queueUrl })
     this.Model = config.schema(config.tableName)
   }
+
+  getFromCache (ID) {
+    return this.Model.get(ID)
+      .then(item => item || Promise.reject())
+  }
+
   _ensureApi () {
     return this.almaApi
       ? Promise.resolve(this.almaApi)

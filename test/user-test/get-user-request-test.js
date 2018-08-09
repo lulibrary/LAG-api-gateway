@@ -57,7 +57,7 @@ const mockTable = (tableName) => {
   })
 }
 
-describe('request path end to end tests', function () {
+describe('/user/<userID>/requests/<requestID> path end to end tests', function () {
   this.timeout(10000)
 
   before(() => {
@@ -146,43 +146,43 @@ describe('request path end to end tests', function () {
       })
   })
 
-  it('should call SQS#sendMessage if no Request is in the Cache', () => {
-    const sendMessageStub = sandbox.stub()
-    sendMessageStub.callsArgWith(1, null, true)
-    AWS_MOCK.mock('SQS', 'sendMessage', sendMessageStub)
-    getItemStub.callsArgWith(1, null, { })
-    // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
-    mocks.push('SQS')
-    const getParameterStub = sandbox.stub()
-    getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
-    AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
-    mocks.push('SSM')
+  // it('should call SQS#sendMessage if no Request is in the Cache', () => {
+  //   const sendMessageStub = sandbox.stub()
+  //   sendMessageStub.callsArgWith(1, null, true)
+  //   AWS_MOCK.mock('SQS', 'sendMessage', sendMessageStub)
+  //   getItemStub.callsArgWith(1, null, { })
+  //   // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
+  //   mocks.push('SQS')
+  //   const getParameterStub = sandbox.stub()
+  //   getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
+  //   AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
+  //   mocks.push('SSM')
 
-    const testUserID = `test_user_${uuid()}`
-    const testRequestID = `test_request_${uuid()}`
+  //   const testUserID = `test_user_${uuid()}`
+  //   const testRequestID = `test_request_${uuid()}`
 
-    nock('https://api-eu.hosted.exlibrisgroup.com')
-      .get(uri => true)
-      .reply(200, {
-        request_id: testRequestID
-      })
+  //   nock('https://api-eu.hosted.exlibrisgroup.com')
+  //     .get(uri => true)
+  //     .reply(200, {
+  //       request_id: testRequestID
+  //     })
 
-    return handle({
-      pathParameters: {
-        userID: testUserID,
-        requestID: testRequestID
-      }
-    })
-      .then(() => {
-        sendMessageStub.should.have.been.calledWith({
-          QueueUrl: testQueueUrl,
-          MessageBody: JSON.stringify({
-            userID: testUserID,
-            requestID: testRequestID
-          })
-        })
-      })
-  })
+  //   return handle({
+  //     pathParameters: {
+  //       userID: testUserID,
+  //       requestID: testRequestID
+  //     }
+  //   })
+  //     .then(() => {
+  //       sendMessageStub.should.have.been.calledWith({
+  //         QueueUrl: testQueueUrl,
+  //         MessageBody: JSON.stringify({
+  //           userID: testUserID,
+  //           requestID: testRequestID
+  //         })
+  //       })
+  //     })
+  // })
 
   it('should return an error if it cannot get the request from the cache or the API', () => {
     AWS_MOCK.mock('SQS', 'sendMessage', {})

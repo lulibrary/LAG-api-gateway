@@ -25,7 +25,11 @@ class ApiUser extends ApiObject {
 
   get (userID) {
     return this.getFromCache(userID)
-      .catch(() => this.getFromApi(userID))
+      .then(formatCacheUser)
+      .catch(() => {
+        this.queue.sendMessage(userID)
+        return this.getFromApi(userID)
+      })
   }
 
   getLoans (userID) {
@@ -37,7 +41,7 @@ class ApiUser extends ApiObject {
 
   getLoanIDs (userID) {
     const loanResolver = new ApiUserLoan()
-    return this._getResourceIDs(userID, 'loans', loanResolver)
+    return this._getResourceIDs(userID, 'loan_ids', loanResolver)
   }
 
   getRequests (userID) {
@@ -48,7 +52,7 @@ class ApiUser extends ApiObject {
 
   getRequestIDs (userID) {
     const requestResolver = new ApiUserRequest()
-    return this._getResourceIDs(userID, 'requests', requestResolver)
+    return this._getResourceIDs(userID, 'request_ids', requestResolver)
   }
 
   getFromApi (userID) {
@@ -58,18 +62,13 @@ class ApiUser extends ApiObject {
       .then(user => _pick(user.data, userApiFields))
   }
 
-  getFromCache (userID) {
-    return this.Model.get(userID)
-      .then(user => user
-        ? formatCacheUser(user)
-        : (this.queue.sendMessage(userID), Promise.reject())
-      )
-  }
-
   _getResourceIDs (userID, resourceName, resolver) {
     return this.getFromCache(userID)
       .then(user => user[resourceName])
-      .catch(() => this._getResourceIDsFromApi(userID, resolver))
+      .catch(() => {
+        this.queue.sendMessage(userID)
+        return this._getResourceIDsFromApi(userID, resolver)
+      })
   }
 
   _getResourceIDsFromApi (userID, resolver) {
