@@ -41,11 +41,17 @@ describe('api user class tests', () => {
 
   describe('get method tests', () => {
     it('should call getFromCache with the provided ID', () => {
-      const getFromCacheStub = stubMethod('getFromCache')
-      wire('formatCacheUser')
+      const testUserID = uuid()
+
+      const getFromCacheStub = stubMethod('getFromCache', true, {
+        primary_id: testUserID,
+        loan_ids: [],
+        request_ids: [],
+        fee_ids: []
+      })
+      // wire('formatCacheUser')
 
       const testApiUser = new ApiUser()
-      const testUserID = uuid()
 
       return testApiUser.get(testUserID)
         .then(() => {
@@ -53,9 +59,9 @@ describe('api user class tests', () => {
         })
     })
 
-    it('should call getFromApi with the ID if getFromCache rejects', () => {
+    it('should call _getResourceIDsFromApi with the ID if getFromCache rejects', () => {
       stubMethod('getFromCache', false)
-      const getFromApiStub = stubMethod('getFromApi')
+      const getFromApiStub = stubMethod('_getResourceIDsFromApi', true, [])
       const testApiUser = new ApiUser()
       sandbox.stub(testApiUser.queue, 'sendMessage').resolves()
 
@@ -64,6 +70,7 @@ describe('api user class tests', () => {
       return testApiUser.get(testUserID)
         .then(() => {
           getFromApiStub.should.have.been.calledWith(testUserID)
+          getFromApiStub.should.have.been.calledThrice
         })
     })
   })

@@ -28,13 +28,27 @@ class ApiUser extends ApiObject {
   }
 
   get (userID) {
+    const subResources = [
+      { name: 'loans', resolver: new ApiUserLoan() },
+      { name: 'requests', resolver: new ApiUserRequest() },
+      { name: 'fees', resolver: new ApiUserFee() }
+    ]
+
     return this.getFromCache(userID)
       .then(formatCacheUser)
       .catch(() => {
         this.queue.sendMessage(userID)
-        return this.getFromApi(userID)
-          .then(user => _pick(user, userApiFields))
+        return Promise.all(
+          subResources.map(resource =>
+            this._getResourceIDsFromApi(userID, resource.resolver)
+          ))
+          .then(IDs => formatUserResources(userID, IDs))
       })
+      .then(user => Promise.all(
+        subResources.map(resource =>
+          this._resolveResources(userID, user[resource.name], resource.resolver)
+        )))
+      .then(data => formatUserResources(userID, data))
   }
 
   getLoans (userID) {
@@ -86,6 +100,15 @@ const formatCacheUser = user => {
     loans: user.loan_ids,
     requests: user.request_ids,
     fees: user.fee_ids
+  }
+}
+
+const formatUserResources = (userID, responses) => {
+  return {
+    primary_id: userID,
+    loans: responses[0],
+    requests: responses[1],
+    fees: responses[2]
   }
 }
 
