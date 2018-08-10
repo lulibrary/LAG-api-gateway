@@ -16,6 +16,7 @@ provider:
         - ${self:custom.TableArns.${opt:stage}.usersTable}
         - ${self:custom.TableArns.${opt:stage}.loansTable}
         - ${self:custom.TableArns.${opt:stage}.requestsTable}
+        - ${self:custom.TableArns.${opt:stage}.feesTable}
     - Effect: Allow
       Action:
         - sqs:SendMessage
@@ -26,6 +27,7 @@ provider:
         - ${self:custom.QueueArns.${opt:stage}.usersQueue}
         - ${self:custom.QueueArns.${opt:stage}.loansQueue}
         - ${self:custom.QueueArns.${opt:stage}.requestsQueue}
+        - ${self:custom.QueueArns.${opt:stage}.feesQueue}
     - Effect: Allow
       Action:
         - ssm:GetParameter
@@ -109,6 +111,37 @@ functions:
       ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
       REQUEST_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.requestsTable}
       REQUESTS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.requestsQueue}
+  userFeesHandler:
+    handler: src/user/get-user-fees.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/fees
+          request:
+            parameters:
+              paths:
+                userID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      USER_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.usersTable}
+      USERS_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.usersQueue}
+      FEE_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.feesTable}
+      FEES_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.feesQueue}
+  userFeeHandler:
+    handler: src/user/get-user-fee.handle
+    events:
+      - http:
+          method: get
+          path: users/{userID}/fees/{feeID}
+          request:
+            parameters:
+              paths:
+                userID: true
+                feeID: true
+    environment:
+      ALMA_API_KEY_NAME: ${env:ALMA_API_KEY_NAME}
+      FEE_CACHE_TABLE_NAME: ${self:custom.TableNames.${opt:stage}.feesTable}
+      FEES_QUEUE_URL: ${self:custom.QueueUrls.${opt:stage}.feesQueue}
 
 custom:
   TableNames:
@@ -116,37 +149,45 @@ custom:
       usersTable: ${env:USER_TABLE_NAME_STG}
       loansTable: ${env:LOAN_TABLE_NAME_STG}
       requestsTable: ${env:REQUEST_TABLE_NAME_STG}
+      feesTable: ${env:FEE_TABLE_NAME_STG}
     prod:
       usersTable: ${env:USER_TABLE_NAME_PROD}
       loansTable: ${env:LOAN_TABLE_NAME_PROD}
       requestsTable: ${env:REQUEST_TABLE_NAME_PROD}
+      feesTable: ${env:FEE_TABLE_NAME_PROD}
 
   TableArns:
     stg:
       usersTable: ${env:USER_TABLE_ARN_STG}
       loansTable: ${env:LOAN_TABLE_ARN_STG}
       requestsTable: ${env:REQUEST_TABLE_ARN_STG}
+      feesTable: ${env:FEE_TABLE_ARN_STG}
     prod:
       usersTable: ${env:USER_TABLE_ARN_PROD}
       loansTable: ${env:LOAN_TABLE_ARN_PROD}
       requestsTable: ${env:REQUEST_TABLE_ARN_PROD}
+      feesTable: ${env:FEE_TABLE_ARN_PROD}
   
   QueueUrls:
     stg:
       usersQueue: ${env:USER_QUEUE_URL_STG}
       loansQueue: ${env:LOAN_QUEUE_URL_STG}
       requestsQueue: ${env:REQUEST_QUEUE_URL_STG}
+      feesQueue: ${env:FEE_QUEUE_URL_STG}
     prod:
       usersQueue: ${env:USER_QUEUE_URL_PROD}
       loansQueue: ${env:LOAN_QUEUE_URL_PROD}
       requestsQueue: ${env:REQUEST_QUEUE_URL_PROD}
+      feesQueue: ${env:FEE_QUEUE_URL_PROD}
 
   QueueArns:
     stg:
       usersQueue: ${env:USER_QUEUE_ARN_STG}
       loansQueue: ${env:LOAN_QUEUE_ARN_STG}
       requestsQueue: ${env:REQUEST_QUEUE_ARN_STG}
+      feesQueue: ${env:FEE_QUEUE_ARN_STG}
     prod:
       usersQueue: ${env:USER_QUEUE_ARN_PROD}
       loansQueue: ${env:LOAN_QUEUE_ARN_PROD}
       requestsQueue: ${env:REQUEST_QUEUE_ARN_PROD}
+      feesQueue: ${env:FEE_QUEUE_ARN_PROD}
