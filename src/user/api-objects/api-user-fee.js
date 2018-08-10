@@ -4,18 +4,21 @@ const _pick = require('lodash.pick')
 const ApiUserObject = require('./api-user-object')
 
 const feeFields = [
-  'fee_id',
-  'renewable',
-  'call_number',
-  'fee_status',
-  'due_date',
-  'item_barcode',
-  'mms_id',
+  'id',
+  'user_primary_id',
+  'type',
+  'status',
+  'balance',
+  'remaining_vat_amount',
+  'original_amount',
+  'original_vat_amount',
+  'creation_time',
+  'comment',
+  'owner',
   'title',
-  'author',
-  'description',
-  'publication_year',
-  'process_status'
+  'barcode',
+  'bursar_transaction_id',
+  'transactions'
 ]
 
 class ApiFee extends ApiUserObject {

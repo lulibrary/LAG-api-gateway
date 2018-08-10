@@ -7,11 +7,13 @@ const _pick = require('lodash.pick')
 
 const ApiUserLoan = require('./api-user-loan')
 const ApiUserRequest = require('./api-user-request')
+const ApiUserFee = require('./api-user-fee')
 
 const userApiFields = [
   'primary_id',
   'loans',
-  'requests'
+  'requests',
+  'fees'
 ]
 
 class ApiUser extends ApiObject {
@@ -41,6 +43,10 @@ class ApiUser extends ApiObject {
 
   getRequests (userID) {
     return this._getResources(userID, ApiUserRequest, 'request_ids')
+  }
+
+  getFees (userID) {
+    return this._getResources(userID, ApiUserFee, 'fee_ids')
   }
 
   _getResources (userID, ResolverClass, cacheIDsField) {
@@ -78,7 +84,8 @@ const formatCacheUser = user => {
   return {
     primary_id: user.primary_id,
     loans: user.loan_ids,
-    requests: user.request_ids
+    requests: user.request_ids,
+    fees: user.fee_ids
   }
 }
 
