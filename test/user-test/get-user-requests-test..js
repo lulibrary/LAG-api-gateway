@@ -75,6 +75,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should query the Cache for a User record', () => {
+    sandbox.stub(Date, 'now').returns(0)
     process.env.ALMA_KEY = 'key'
 
     const testUserID = `test_user_${uuid()}`
@@ -84,7 +85,7 @@ describe('user/<userID>/requests path end to end tests', function () {
           S: testUserID
         },
         expiry_date: {
-          N: '1600000000'
+          N: '2147483647'
         },
         request_ids: []
       }
@@ -114,6 +115,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should query the Alma API if no User is in the Cache', () => {
+    sandbox.stub(Date, 'now').returns(0)
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
@@ -147,6 +149,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should call SQS#sendMessage if no User is in the Cache', () => {
+    sandbox.stub(Date, 'now').returns(0)
     const sendMessageStub = sandbox.stub()
     sendMessageStub.callsArgWith(1, null, true)
     AWS_MOCK.mock('SQS', 'sendMessage', sendMessageStub)
@@ -179,6 +182,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should return an error if it cannot get the user from the cache or the API', () => {
+    sandbox.stub(Date, 'now').returns(0)
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     mocks.push('SQS')
     getItemStub.callsArgWith(1, null, { })
@@ -216,6 +220,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should query the Cache for each Request record on the User', () => {
+    sandbox.stub(Date, 'now').returns(0)
     const testUserID = `test_user_${uuid()}`
     const testRequestIDs = [uuid(), uuid(), uuid(), uuid()]
 
@@ -225,7 +230,7 @@ describe('user/<userID>/requests path end to end tests', function () {
           S: testUserID
         },
         expiry_date: {
-          N: '1600000000'
+          N: '2147483647'
         },
         request_ids: testRequestIDs
       }
@@ -236,6 +241,9 @@ describe('user/<userID>/requests path end to end tests', function () {
         Item: {
           request_id: {
             S: id
+          },
+          record_expiry_date: {
+            N: '2147483647'
           }
         }
       })
@@ -261,6 +269,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should call the Alma Api for any Requests which are not in the Cache', () => {
+    sandbox.stub(Date, 'now').returns(0)
     const testUserID = `test_user_${uuid()}`
     const testRequestIDs = [uuid(), uuid(), uuid(), uuid()]
 
@@ -277,7 +286,7 @@ describe('user/<userID>/requests path end to end tests', function () {
           S: testUserID
         },
         expiry_date: {
-          N: '1600000000'
+          N: '2147483647'
         },
         request_ids: testRequestIDs
       }
@@ -328,6 +337,7 @@ describe('user/<userID>/requests path end to end tests', function () {
   })
 
   it('should resolve with any existing requests if an Alma API call rejects', () => {
+    sandbox.stub(Date, 'now').returns(0)
     const testUserID = `test_user_${uuid()}`
     const testRequestIDs = [uuid(), uuid(), uuid(), uuid(), uuid()]
 
@@ -344,7 +354,7 @@ describe('user/<userID>/requests path end to end tests', function () {
           S: testUserID
         },
         expiry_date: {
-          N: '1600000000'
+          N: '2147483647'
         },
         request_ids: testRequestIDs
       }
@@ -355,6 +365,9 @@ describe('user/<userID>/requests path end to end tests', function () {
         Item: {
           request_id: {
             S: id
+          },
+          record_expiry_date: {
+            N: '2147483647'
           }
         }
       }
@@ -374,6 +387,11 @@ describe('user/<userID>/requests path end to end tests', function () {
         alma.get(`/almaws/v1/users/${testUserID}/requests/${requestID}?format=json`)
           .reply(200, {
             request_id: requestID
+          })
+      } else {
+        alma.get(`/almaws/v1/users/${testUserID}/requests/${requestID}?format=json`)
+          .reply(400, {
+            message: 'item not found'
           })
       }
     })

@@ -11,8 +11,8 @@ class ApiObject {
   }
 
   getFromCache (ID) {
-    return this.Model.get(ID)
-      .then(item => item || Promise.reject())
+    return this.Model.getValid(ID)
+      .then(item => item || Promise.reject(new Error('Invalid cache object')))
   }
 
   getFromApi (...ids) {

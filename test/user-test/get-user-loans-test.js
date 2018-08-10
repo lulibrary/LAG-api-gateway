@@ -236,6 +236,9 @@ describe('user/<userID>/loans path end to end tests', function () {
         Item: {
           loan_id: {
             S: id
+          },
+          expiry_date: {
+            N: '2147483647'
           }
         }
       })
@@ -355,6 +358,9 @@ describe('user/<userID>/loans path end to end tests', function () {
         Item: {
           loan_id: {
             S: id
+          },
+          expiry_date: {
+            N: '2147483647'
           }
         }
       }
