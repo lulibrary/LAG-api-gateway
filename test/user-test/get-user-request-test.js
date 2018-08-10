@@ -27,9 +27,9 @@ const getItemStub = stubs.getItemStub
 const describeTableStub = stubs.describeTableStub
 
 // Module under test
-let userPathHandler = require('../../src/user/get-user-request')
+let requestPathHandler = require('../../src/user/get-user-request')
 const handle = (event, ctx) => new Promise((resolve, reject) => {
-  userPathHandler.handle(event, ctx, (err, res) => {
+  requestPathHandler.handle(event, ctx, (err, res) => {
     return err ? reject(err) : resolve(res)
   })
 })
@@ -72,6 +72,7 @@ describe('/user/<userID>/requests/<requestID> path end to end tests', function (
   })
 
   it('should query the Cache for a Request record', () => {
+    sandbox.stub(Date, 'now').returns(0)
     process.env.ALMA_KEY = 'key'
 
     const testUserID = `test_user_${uuid()}`
@@ -81,8 +82,8 @@ describe('/user/<userID>/requests/<requestID> path end to end tests', function (
         request_id: {
           S: testRequestID
         },
-        expiry_date: {
-          N: '1600000000'
+        record_expiry_date: {
+          N: '2147483647'
         }
       }
     }
@@ -112,6 +113,7 @@ describe('/user/<userID>/requests/<requestID> path end to end tests', function (
   })
 
   it('should query the Alma API if no Request is in the Cache', () => {
+    sandbox.stub(Date, 'now').returns(0)
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
@@ -185,6 +187,7 @@ describe('/user/<userID>/requests/<requestID> path end to end tests', function (
   // })
 
   it('should return an error if it cannot get the request from the cache or the API', () => {
+    sandbox.stub(Date, 'now').returns(0)
     AWS_MOCK.mock('SQS', 'sendMessage', {})
     getItemStub.callsArgWith(1, null, { })
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
@@ -217,6 +220,7 @@ describe('/user/<userID>/requests/<requestID> path end to end tests', function (
       }
     }, {})
       .catch(e => {
+        console.log(e)
         e.statusCode.should.equal(400)
       })
   })

@@ -41,9 +41,9 @@
     "uuid": "^3.3.2"
   },
   "dependencies": {
-    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git",
-    "@lulibrary/lag-utils": "git+ssh://git@github.com/lulibrary/LAG-Utils.git#queue-methods",
-    "alma-api-wrapper": "git+ssh://git@github.com/lulibrary/node-alma-api-wrapper.git",
+    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.6.0",
+    "@lulibrary/lag-utils": "git+ssh://git@github.com/lulibrary/LAG-Utils.git#v0.4.0",
+    "alma-api-wrapper": "git+ssh://git@github.com/lulibrary/node-alma-api-wrapper.git#v0.2.0",
     "lodash.pick": "^4.4.0",
     "node-http-error": "^2.0.0"
   }

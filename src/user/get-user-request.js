@@ -6,7 +6,8 @@ module.exports.handle = (event, context, callback) => {
   const userID = event.pathParameters.userID
   const requestID = event.pathParameters.requestID
 
-  new ApiUserRequest().get(userID, requestID)
+  new ApiUserRequest()
+    .get(userID, requestID)
     .then(response => {
       callback(null, {
         statusCode: 200,
