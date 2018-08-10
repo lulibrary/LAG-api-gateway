@@ -56,6 +56,22 @@ const mockTable = (tableName) => {
   })
 }
 
+const stubResources = (callNo = 1) => {
+  const resourceIDs = ['loan_id', 'request_id', 'id']
+  const expiryFields = ['expiry_date', 'record_expiry_date', 'expiry_date']
+
+  resourceIDs.forEach((ID, index) => {
+    getItemStub.onCall(callNo + index).callsArgWith(1, null, {
+      [ID]: {
+        S: uuid()
+      },
+      [expiryFields[index]]: {
+        N: '2147483647'
+      }
+    })
+  })
+}
+
 describe('user path end to end tests', function () {
   this.timeout(10000)
 
@@ -87,12 +103,16 @@ describe('user path end to end tests', function () {
         request_ids: {
           L: []
         },
+        fee_ids: {
+          L: []
+        },
         expiry_date: {
           N: '1600000000'
         }
       }
     }
-    getItemStub.callsArgWith(1, null, testUserRecord)
+    getItemStub.onCall(0).callsArgWith(1, null, testUserRecord)
+    stubResources()
     const getParameterStub = sandbox.stub()
     getParameterStub.callsArgWith(1, null, { Parameter: { Value: 'key' } })
     AWS_MOCK.mock('SSM', 'getParameter', getParameterStub)
@@ -118,7 +138,8 @@ describe('user path end to end tests', function () {
 
   it('should query the Alma API if no User is in the Cache', () => {
     AWS_MOCK.mock('SQS', 'sendMessage', {})
-    getItemStub.callsArgWith(1, null, { })
+    getItemStub.onCall(0).callsArgWith(1, null, { })
+    stubResources()
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
     const getParameterStub = sandbox.stub()
@@ -131,13 +152,17 @@ describe('user path end to end tests', function () {
     let urlQueries = []
 
     const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
-      .get((uri) => {
-        urlQueries.push(uri)
-        return true
-      })
-      .reply(200, {
-        primary_id: testUserID
-      })
+
+    alma.get(uri => {
+      urlQueries.push(uri)
+      return false
+    }).reply(400, {})
+
+    const subCalls = ['loans', 'requests', 'fees']
+    subCalls.forEach(call => {
+      alma.get(`/almaws/v1/users/${testUserID}/${call}?format=json`)
+        .reply(200, [])
+    })
 
     return handle({
       pathParameters: {
@@ -145,7 +170,9 @@ describe('user path end to end tests', function () {
       }
     }, {})
       .then(() => {
-        urlQueries.should.include(`/almaws/v1/users/${testUserID}?format=json`)
+        subCalls.forEach(call => {
+          urlQueries.should.include(`/almaws/v1/users/${testUserID}/${call}?format=json`)
+        })
       })
   })
 
@@ -153,7 +180,8 @@ describe('user path end to end tests', function () {
     const sendMessageStub = sandbox.stub()
     sendMessageStub.callsArgWith(1, null, true)
     AWS_MOCK.mock('SQS', 'sendMessage', sendMessageStub)
-    getItemStub.callsArgWith(1, null, { })
+    getItemStub.onCall(0).callsArgWith(1, null, { })
+    stubResources()
     // AWS_MOCK.mock('DynamoDB', 'getItem', cacheGetStub)
     mocks.push('SQS')
     const getParameterStub = sandbox.stub()
@@ -163,11 +191,13 @@ describe('user path end to end tests', function () {
 
     const testUserID = `test_user_${uuid()}`
 
-    nock('https://api-eu.hosted.exlibrisgroup.com')
-      .get(uri => true)
-      .reply(200, {
-        primary_id: testUserID
-      })
+    const alma = nock('https://api-eu.hosted.exlibrisgroup.com')
+
+    const subCalls = ['loans', 'requests', 'fees']
+    subCalls.forEach(call => {
+      alma.get(`/almaws/v1/users/${testUserID}/${call}?format=json`)
+        .reply(200, [])
+    })
 
     return handle({
       pathParameters: {
