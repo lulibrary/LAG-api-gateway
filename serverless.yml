@@ -32,7 +32,7 @@ provider:
       Action:
         - ssm:GetParameter
       Resource:
-        - ${self:custom.prefixes.SSM}${env:ALMA_API_KEY_NAME}
+        - ${self:custom.Prefixes.SSM}${env:ALMA_API_KEY_NAME}
 
 functions:
   userHandler:
@@ -158,15 +158,15 @@ custom:
 
   TableArns:
     stg:
-      usersTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.stg.usersTable}
-      loansTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.stg.loansTable}
-      requestsTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.stg.requestsTable}
-      feesTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.stg.feesTable}
+      usersTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.stg.usersTable}
+      loansTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.stg.loansTable}
+      requestsTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.stg.requestsTable}
+      feesTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.stg.feesTable}
     prod:
-      usersTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.prod.usersTable}
-      loansTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.prod.loansTable}
-      requestsTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.prod.requestsTable}
-      feesTable: ${self:custom.prefixes.DynamoDB}/${self:custom.TableNames.prod.feesTable}
+      usersTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.prod.usersTable}
+      loansTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.prod.loansTable}
+      requestsTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.prod.requestsTable}
+      feesTable: ${self:custom.Prefixes.DynamoDB}/${self:custom.TableNames.prod.feesTable}
   
   QueueUrls:
     stg:
